@@ -1,0 +1,16 @@
+#!/bin/sh
+# Post-commit hook to automatically update the update log
+
+# Get the current date and commit info
+DATE=$(date +"%Y-%m-%d")
+COMMIT_HASH=$(git rev-parse --short HEAD)
+BRANCH=$(git branch --show-current)
+COMMIT_MSG=$(git log -1 --pretty=format:"%s")
+
+# Update the update.md file
+echo "$DATE | v1.1.2 | $BRANCH | $COMMIT_HASH | $COMMIT_MSG (@Jianan-Huang0609)" >> update.md
+
+# Add the updated file to the next commit
+git add update.md
+
+echo "✅ Update log automatically updated with commit: $COMMIT_MSG"

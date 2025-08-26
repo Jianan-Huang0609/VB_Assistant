@@ -1,0 +1,45 @@
+{
+  "name": "vb-assistant-hub",
+  "version": "1.1.2",
+  "description": "专业的VB.NET开发辅助平台，提升开发效率",
+  "main": "index.html",
+  "scripts": {
+    "dev": "python -m http.server 8000",
+    "serve": "python -m http.server 8000",
+    "update": "node scripts/update-log.mjs",
+    "update:add": "node scripts/update-log.mjs add",
+    "update:git": "node scripts/update-log.mjs git",
+    "update:readme": "node scripts/update-log.mjs readme",
+    "test": "echo \"No tests specified\" && exit 0"
+  },
+  "keywords": [
+    "vb.net",
+    "development",
+    "tools",
+    "project-management",
+    "poc",
+    "tech-stack",
+    "todo",
+    "web-app"
+  ],
+  "author": "Jianan-Huang0609",
+  "license": "MIT",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/Jianan-Huang0609/VB_Assistant.git"
+  },
+  "bugs": {
+    "url": "https://github.com/Jianan-Huang0609/VB_Assistant/issues"
+  },
+  "homepage": "https://github.com/Jianan-Huang0609/VB_Assistant#readme",
+  "engines": {
+    "node": ">=14.0.0"
+  },
+  "devDependencies": {},
+  "dependencies": {},
+  "husky": {
+    "hooks": {
+      "post-commit": ".husky/post-commit"
+    }
+  }
+}
