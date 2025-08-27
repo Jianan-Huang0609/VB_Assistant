@@ -1,0 +1,545 @@
+<script src="https://cdn.tailwindcss.com"></script>
+<style>
+  .card { box-shadow: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -4px rgba(0,0,0,.1); }
+  .badge { font-size: 12px; border: 1px solid rgba(255,255,255,.3); padding: 2px 8px; border-radius: 9999px; }
+  .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+  .grid-bento { display:grid; grid-template-columns: repeat(12, minmax(0,1fr)); gap: 1rem; }
+  .chip { border-radius: 9999px; padding: 2px 8px; font-size: 12px; border: 1px solid rgba(255,255,255,.2); background: rgba(255,255,255,.1); }
+  .row-hover:hover { background: rgba(255,255,255,.05); }
+</style>
+
+<section class="module-content">
+  <!-- Header -->
+  <header class="mb-8">
+    <div class="flex items-center justify-between">
+      <div>
+        <h1 class="text-3xl md:text-4xl font-black text-gray-200 mb-2">VB-ToDo</h1>
+        <p class="text-lg text-gray-400">全周期VB项目管理工具 · 多模板 + 设计增强</p>
+      </div>
+      <div id="toolbar" class="flex gap-2">
+        <button id="btnGenerate" class="px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white rounded-lg font-semibold transition-all">生成清单</button>
+        <button id="btnPrint" class="px-4 py-2 bg-gray-600 hover:bg-gray-700 text-white rounded-lg font-semibold transition-all">打印 / 导出 PDF</button>
+      </div>
+    </div>
+  </header>
+
+  <main>
+    <!-- Project meta -->
+    <section class="card rounded-2xl p-6 mb-6 bg-gray-800/50 border border-gray-700">
+      <h2 class="text-lg font-bold mb-4 text-gray-200">项目参数</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">项目名称</label>
+          <input id="projectName" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-gray-200" placeholder="例如：手势可控 3D 架子鼓" />
+        </div>
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">开始日期</label>
+          <input id="startDate" type="date" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-gray-200" />
+        </div>
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">周期长度（周）</label>
+          <input id="weeks" type="number" min="1" value="4" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-gray-200" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm text-gray-300 mb-1">想法 / 概念（一句话）</label>
+          <input id="idea" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-gray-200" placeholder="例如：网页端 3D 架子鼓 + 手势控制 + 录音" />
+        </div>
+        <div>
+          <label class="block text-sm text-gray-300 mb-1">模板</label>
+          <select id="template" class="w-full bg-gray-700 border border-gray-600 rounded px-3 py-2 text-gray-200">
+            <option value="vibe_ra">Vibe + RA 追溯（完整）</option>
+            <option value="vibe_only">Vibe（精简）</option>
+            <option value="web_ra">网页开发</option>
+            <option value="miniapp_ra">小程序开发</option>
+            <option value="plugin_ra">浏览器插件开发</option>
+            <option value="app_ra">移动端 App 开发</option>
+            <option value="fullstack_ra">全栈开发（Next.js + Prisma + Postgres）</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Design / Control Bar -->
+    <section id="designBar" class="card rounded-2xl p-4 mb-6 bg-gray-800/50 border border-gray-700">
+      <div class="flex flex-wrap gap-3 items-center">
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-gray-400">视图：</span>
+          <button data-view="all" class="viewBtn px-3 py-1.5 border border-gray-600 rounded bg-blue-600 text-white">全部</button>
+          <button data-view="pre" class="viewBtn px-3 py-1.5 border border-gray-600 rounded text-gray-300 hover:bg-gray-700">仅阶段一</button>
+          <button data-view="dev" class="viewBtn px-3 py-1.5 border border-gray-600 rounded text-gray-300 hover:bg-gray-700">仅阶段二</button>
+          <button data-view="post" class="viewBtn px-3 py-1.5 border border-gray-600 rounded text-gray-300 hover:bg-gray-700">仅阶段三</button>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-gray-400">过滤：</span>
+          <input id="filterText" class="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-gray-200" placeholder="关键词/标签/ID…" />
+          <select id="filterPriority" class="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-gray-200">
+            <option value="">优先级（全部）</option>
+            <option value="P0">P0</option>
+            <option value="P1">P1</option>
+            <option value="P2">P2</option>
+            <option value="P3">P3</option>
+          </select>
+          <select id="filterStatus" class="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-gray-200">
+            <option value="">状态（全部）</option>
+            <option value="open">未开始</option>
+            <option value="doing">进行中</option>
+            <option value="done">已完成</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-gray-400">分组：</span>
+          <select id="groupBy" class="bg-gray-700 border border-gray-600 rounded px-2 py-1 text-gray-200">
+            <option value="none">不分组</option>
+            <option value="tag">按标签</option>
+            <option value="priority">按优先级</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="btnExpandNotes" class="px-3 py-1.5 border border-gray-600 rounded text-gray-300 hover:bg-gray-700">展开/收起备注</button>
+          <button id="btnQuickAdd" class="px-3 py-1.5 border border-gray-600 rounded text-gray-300 hover:bg-gray-700">快速新增任务</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Export bar -->
+    <section id="exportBar" class="card rounded-2xl p-4 mb-6 flex flex-wrap gap-2 items-center bg-gray-800/50 border border-gray-700">
+      <button id="btnExportHTML" class="px-3 py-2 border border-gray-600 rounded hover:bg-gray-700 text-gray-300">导出自包含 HTML</button>
+      <button id="btnExportJSON" class="px-3 py-2 border border-gray-600 rounded hover:bg-gray-700 text-gray-300">导出 JSON</button>
+      <button id="btnExportCSV" class="px-3 py-2 border border-gray-600 rounded hover:bg-gray-700 text-gray-300">导出 CSV</button>
+      <button id="btnExportICS" class="px-3 py-2 border border-gray-600 rounded hover:bg-gray-700 text-gray-300">导出 ICS（日历）</button>
+      <span class="text-xs text-gray-500">自包含 HTML 会内嵌当前状态，打开即复现</span>
+    </section>
+
+    <!-- Output -->
+    <section id="output" class="space-y-6"></section>
+  </main>
+</section>
+
+<script id="embedded-plan" type="application/json">null</script>
+
+<script>
+  // VB-ToDo Module JavaScript (简化版实现)
+  (function() {
+    // Utilities
+    const $ = s => document.querySelector(s);
+    const $$ = s => Array.from(document.querySelectorAll(s));
+    const fmt = d => { const y=d.getFullYear(), m=('0'+(d.getMonth()+1)).slice(-2), x=('0'+d.getDate()).slice(-2); return y+'-'+m+'-'+x; };
+    function addDays(d, n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+    function slug(s){ return (s||'vibe-plan').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+    function download(name, text, mime='text/plain;charset=utf-8'){ const blob=new Blob([text],{type:mime}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(url),500); }
+
+    // Tag colors
+    const TAG_COLORS = {
+      '需求':'#0ea5e9','设计':'#a855f7','验收':'#10b981','根目录':'#64748b','资源':'#22c55e','文档':'#f59e0b','版本':'#ef4444','资料包':'#8b5cf6',
+      'MVP':'#0ea5e9','模块-3D':'#22c55e','模块-手势':'#06b6d4','模块-逻辑':'#f97316','模块-音频':'#eab308','模块-动效':'#a855f7','调试':'#ef4444','验证':'#10b981',
+      '交付':'#0ea5e9','日志':'#f59e0b','追溯':'#64748b','RA-变更':'#ef4444','RA-风险':'#f97316','RA-验证':'#22c55e','RA-恢复':'#06b6d4','维护':'#0ea5e9'
+    };
+
+    // Task Model
+    function baseVibe(template){
+      const pre = [
+        {text:'明确目标场景（例如：网页端3D架子鼓可手势控制，敲击打出声音）', tag:'需求', required:true},
+        {text:'输出功能清单（必做 / 可选 / 未来升级）', tag:'需求', required:true},
+        {text:'绘制效果图 / 流程图（UI 布局、功能逻辑）', tag:'设计'},
+        {text:'定义验收标准（如声音延迟 ≤ 0.2s，击打准确率 ≥ 90%）', tag:'验收'},
+        {text:'创建固定目录结构 /public/models /public/assets/samples /wasm/mediapipe /src /docs', tag:'根目录', required:true},
+        {text:'将Input资源（模型、音频、依赖文件）放到指定位置', tag:'资源'},
+        {text:'编写根目录说明文档（用途一句话 + 核心资源清单）', tag:'文档'},
+        {text:'版本控制初始化（git init + 第一次 commit）', tag:'版本', required:true}
+      ];
+      const dev = [
+        {text:'MVP：模型能加载', tag:'MVP', required:true},
+        {text:'MVP：基本交互可用且能录屏留痕', tag:'MVP', required:true},
+        {text:'模块：3D 模型加载与摆放（可独立运行）', tag:'模块-3D', required:true},
+        {text:'模块：手势/输入识别（骨架可视化/事件触发）', tag:'模块-手势'},
+        {text:'模块：击打/命中判定（区域+阈值）', tag:'模块-逻辑'},
+        {text:'模块：音频播放（多音色测试）', tag:'模块-音频'},
+        {text:'调试：Console / Network / Elements 定位并修复错误', tag:'调试', required:true},
+        {text:'回归验证：位置→击打→音效→动效 全链路通过', tag:'验证', required:true}
+      ];
+      const post = [
+        {text:'README（项目简介 / 依赖 / 结构 / 使用）', tag:'交付', required:true},
+        {text:'模块功能清单（含完成状态）', tag:'交付'},
+        {text:'截图 / 演示视频（证明效果达成）', tag:'交付'},
+        {text:'更新日志（版本号 + 日期 + 变化描述）', tag:'日志', required:true},
+        {text:'问题修复历史（问题 → 原因 → 解决方案）', tag:'追溯'}
+      ];
+      return {pre,dev,post};
+    }
+
+    function getLifecycleTasks(template){
+      let def = baseVibe(template);
+      
+      // Assign LCY IDs
+      let n=1; const next = ()=> 'LCY-'+String(n++).padStart(3,'0');
+      for(const phase of ['pre','dev','post']){ def[phase] = def[phase].map(t=>({...t, id: next()})); }
+
+      // vibe_only: 仅保留 required
+      if(template === 'vibe_only'){
+        for(const k of ['pre','dev','post']) def[k] = def[k].filter(t=>!!t.required);
+      }
+      return def;
+    }
+
+    // Scheduling
+    function distributeDates(tasks, startDate, weeks){
+      const sd = startDate ? new Date(startDate) : new Date();
+      const totalDays = Math.max(7, weeks*7);
+      const lastWeekStart = addDays(sd, totalDays - 7);
+      const assign = (arr, from, to) => {
+        if(!arr.length) return; const span = Math.max(1, Math.floor((to - from) / arr.length));
+        arr.forEach((t,i)=>{ t.due = fmt(addDays(from, i*span)); });
+      };
+      assign(tasks.pre, sd, addDays(sd, 6)); // 前 1 周
+      assign(tasks.dev, addDays(sd, 7), addDays(lastWeekStart, -1)); // 中间
+      assign(tasks.post, lastWeekStart, addDays(sd, totalDays-1)); // 最后 1 周
+      return tasks;
+    }
+
+    // Rendering
+    function tagChip(tag){
+      const color = TAG_COLORS[tag] || '#64748b';
+      return `<span class="chip" style="border-color:${color}; background: ${color}40; color:${color}">#${tag||''}</span>`;
+    }
+
+    function rowControlsHTML(checked, owner, due, priority='P2', effort='2', status='open', link='', note=''){
+      return `
+        <input type="checkbox" class="taskCheck accent-blue-500" ${checked?'checked':''}>
+        <div class="flex-1 min-w-0">
+          <div class="text-xs sm:text-sm text-gray-400 flex flex-wrap gap-2 items-center mt-1">
+            <select class="taskPriority bg-gray-700 border border-gray-600 rounded px-1.5 py-1 text-xs text-gray-200">
+              ${['P0','P1','P2','P3'].map(p=>`<option ${p===priority?'selected':''}>${p}</option>`).join('')}
+            </select>
+            <select class="taskStatus bg-gray-700 border border-gray-600 rounded px-1.5 py-1 text-xs text-gray-200">
+              ${[['open','未开始'],['doing','进行中'],['done','已完成']].map(([v,l])=>`<option value="${v}" ${v===status?'selected':''}>${l}</option>`).join('')}
+            </select>
+            <label class="text-gray-400">Effort</label>
+            <input type="number" min="1" max="13" value="${effort}" class="taskEffort w-16 bg-gray-700 border border-gray-600 rounded px-1.5 py-1 text-xs text-gray-200" />
+            <label class="text-gray-400">负责人</label>
+            <input type="text" class="text-sm bg-gray-700 border border-gray-600 rounded px-2 py-1 w-24 taskOwner text-gray-200" placeholder="负责人" value="${owner||''}">
+            <input type="date" class="text-sm bg-gray-700 border border-gray-600 rounded px-2 py-1 taskDue text-gray-200" value="${due||''}">
+          </div>
+          <div class="mt-2 flex gap-2 items-center">
+            <input type="url" class="taskLink flex-1 bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm text-gray-200" placeholder="关联链接（PR/文档/需求）" value="${link||''}">
+            <button class="toggleNote px-2 py-1 border border-gray-600 rounded text-xs text-gray-300 hover:bg-gray-700">备注</button>
+          </div>
+          <textarea class="taskNote mt-2 w-full bg-gray-700 border border-gray-600 rounded p-2 text-sm hidden text-gray-200" rows="2" placeholder="补充说明...">${note||''}</textarea>
+        </div>`;
+    }
+
+    function render(tasks, meta, ui){
+      const out = $('#output'); 
+      if (!out) return;
+      out.innerHTML = '';
+
+      // Summary
+      const summary = document.createElement('div');
+      summary.className = 'grid-bento mb-6';
+      summary.innerHTML = `
+        <div class="card rounded-2xl p-6 col-span-12 lg:col-span-8 bg-gray-800/50 border border-gray-700">
+          <div class="text-sm text-gray-400">项目</div>
+          <div class="text-2xl font-bold text-gray-200">${meta.name || '未命名项目'}</div>
+          <div class="text-sm text-gray-400 mt-1">概念：${meta.idea || '—'} · 周期：${meta.weeks} 周 · 开始：${meta.startDate || '今天'}</div>
+          <div class="mt-3 flex gap-2 flex-wrap">
+            <span class="badge">模板：${({
+              'vibe_only':'Vibe 精简', 'vibe_ra':'Vibe + RA 追溯','web_ra':'网页开发','miniapp_ra':'小程序开发','plugin_ra':'浏览器插件开发','app_ra':'移动端 App 开发'
+            })[meta.template] || meta.template}</span>
+          </div>
+        </div>
+        <div class="card rounded-2xl p-6 col-span-12 lg:col-span-4 bg-gray-800/50 border border-gray-700">
+          <div class="text-sm text-gray-400 mb-2">进度</div>
+          <div class="w-full bg-gray-700 h-2 rounded"><div id="progressBar" class="h-2 rounded bg-blue-500" style="width:0%"></div></div>
+          <div class="flex justify-between text-sm text-gray-400 mt-2">
+            <div><span id="doneCount">0</span>/<span id="totalCount">0</span> 完成</div>
+            <div id="progressPct">0%</div>
+          </div>
+        </div>`;
+      out.appendChild(summary);
+
+      const phases = [
+        { key:'pre',  title:'阶段一｜开发前：需求与地基', color:'from-orange-500/20 to-transparent' },
+        { key:'dev',  title:'阶段二｜开发中：MVP→模块化升级', color:'from-blue-500/20 to-transparent' },
+        { key:'post', title:'阶段三｜开发后：保存、维护与追溯', color:'from-emerald-500/20 to-transparent' }
+      ];
+
+      phases.forEach(p => {
+        const list = tasks[p.key];
+        const sec = document.createElement('section');
+        sec.className = 'phase card rounded-2xl p-6 bg-gradient-to-br '+p.color+' bg-gray-800/50 border border-gray-700';
+        sec.dataset.phase = p.key;
+        sec.innerHTML = `<div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold text-gray-200">${p.title}</h3>
+            <div class="text-sm text-gray-400 flex items-center gap-2">
+              <span>新增：</span>
+              <input class="quickNewText bg-gray-700 border border-gray-600 rounded px-2 py-1 text-sm text-gray-200" placeholder="输入任务内容后回车"/>
+            </div>
+          </div>`;
+
+        if(!list || !list.length){
+          sec.innerHTML += `<div class="text-sm text-gray-400">（该阶段暂无任务）</div>`;
+        } else {
+          const ul = document.createElement('div'); ul.className = 'space-y-3 taskList';
+          list.forEach((t, idx) => {
+            const row = document.createElement('div');
+            row.className = 'row-hover bg-gray-700/50 border border-gray-600 rounded-lg px-3 py-3 flex gap-3';
+            const checked = ui && ui[p.key] && ui[p.key][idx] ? ui[p.key][idx].checked : false;
+            const owner = ui && ui[p.key] && ui[p.key][idx] ? (ui[p.key][idx].owner||'') : '';
+            const due   = ui && ui[p.key] && ui[p.key][idx] ? (ui[p.key][idx].due||t.due||'') : (t.due||'');
+            const priority = ui && ui[p.key] && ui[p.key][idx] ? (ui[p.key][idx].priority||'P2') : 'P2';
+            const effort   = ui && ui[p.key] && ui[p.key][idx] ? (ui[p.key][idx].effort||'2') : '2';
+            const status   = ui && ui[p.key] && ui[p.key][idx] ? (ui[p.key][idx].status||'open') : 'open';
+            const link     = ui && ui[p.key] && ui[p.key][idx] ? (ui[p.key][idx].link||'') : '';
+            const note     = ui && ui[p.key] && ui[p.key][idx] ? (ui[p.key][idx].note||'') : '';
+
+            row.innerHTML = `
+              <div class="shrink-0 mt-1 text-xs sm:text-sm w-24">
+                <div class="mono text-gray-400">${t.id}</div>
+                <div class="mt-1">${tagChip(t.tag)}</div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm text-gray-200">${t.text}</div>
+                ${rowControlsHTML(checked, owner, due, priority, effort, status, link, note)}
+              </div>`;
+            ul.appendChild(row);
+          });
+          sec.appendChild(ul);
+        }
+        out.appendChild(sec);
+      });
+
+      // Add event listeners
+      out.addEventListener('click', e=>{
+        if(e.target.classList.contains('toggleNote')){
+          const ta = e.target.closest('.flex-1').querySelector('.taskNote');
+          if(ta){ ta.classList.toggle('hidden'); }
+        }
+      });
+
+      // Quick add
+      out.querySelectorAll('.quickNewText').forEach(inp=>{
+        inp.addEventListener('keydown', ev=>{
+          if(ev.key==='Enter' && ev.target.value.trim()){
+            const phase = ev.target.closest('.phase').dataset.phase;
+            addQuickTask(phase, ev.target.value.trim());
+            ev.target.value='';
+          }
+        })
+      });
+
+      // Progress calc
+      function recalc(){
+        const checks = out.querySelectorAll('.taskCheck');
+        const done = Array.from(checks).filter(c => c.checked).length;
+        const total = checks.length;
+        const doneEl = $('#doneCount');
+        const totalEl = $('#totalCount');
+        const pctEl = $('#progressPct');
+        const barEl = $('#progressBar');
+        
+        if (doneEl) doneEl.textContent = done;
+        if (totalEl) totalEl.textContent = total;
+        const pct = total ? Math.round(done*100/total) : 0;
+        if (pctEl) pctEl.textContent = pct+'%';
+        if (barEl) barEl.style.width = pct+'%';
+      }
+      out.addEventListener('change', e => { if(e.target.classList.contains('taskCheck')) recalc(); });
+      recalc();
+
+      applyFilters();
+    }
+
+    function collectUI(tasks){
+      const ui = { pre:[], dev:[], post:[] };
+      const phases = ['pre','dev','post'];
+      const sections = $$('#output > section.phase');
+      phases.forEach((phase, pi) => {
+        const list = tasks[phase] || [];
+        const sec = sections[pi];
+        const rows = sec ? sec.querySelectorAll('.taskList > div') : [];
+        const arr = [];
+        list.forEach((t,i) => {
+          const row = rows[i];
+          const checked = row ? row.querySelector('.taskCheck')?.checked : false;
+          const due = row ? row.querySelector('.taskDue')?.value : '';
+          const owner = row ? row.querySelector('.taskOwner')?.value : '';
+          const priority = row ? row.querySelector('.taskPriority')?.value : 'P2';
+          const effort = row ? row.querySelector('.taskEffort')?.value : '2';
+          const status = row ? row.querySelector('.taskStatus')?.value : 'open';
+          const link = row ? row.querySelector('.taskLink')?.value : '';
+          const note = row ? row.querySelector('.taskNote')?.value : '';
+          arr.push({checked, due, owner, priority, effort, status, link, note});
+        });
+        ui[phase]=arr;
+      });
+      return ui;
+    }
+
+    // Global state & actions
+    function generate(){
+      const meta = {
+        name: $('#projectName')?.value?.trim() || '',
+        idea: $('#idea')?.value?.trim() || '',
+        startDate: $('#startDate')?.value || '',
+        weeks: Math.max(1, parseInt($('#weeks')?.value || '4', 10)),
+        template: $('#template')?.value || 'vibe_ra'
+      };
+      let tasks = getLifecycleTasks(meta.template);
+      tasks = distributeDates(tasks, meta.startDate, meta.weeks);
+      render(tasks, meta, window.__PLAN__?.ui || null);
+      window.__PLAN__ = { meta, tasks, ui: collectUI(tasks) };
+    }
+
+    function addQuickTask(phase, text){
+      if(!window.__PLAN__) return; 
+      const plan = window.__PLAN__;
+      const id = (()=>{ 
+        const all = ['pre','dev','post'].flatMap(k=>plan.tasks[k]); 
+        const max = all.reduce((m,t)=>Math.max(m, parseInt(t.id.split('-')[1]||'0',10)),0); 
+        return 'LCY-'+String(max+1).padStart(3,'0');
+      })();
+      plan.tasks[phase].push({ id, text, tag:'设计' });
+      render(plan.tasks, plan.meta, plan.ui);
+    }
+
+    function exportHTML(){
+      if(!window.__PLAN__) generate();
+      const plan = window.__PLAN__; 
+      plan.ui = collectUI(plan.tasks);
+      const payload = JSON.stringify(plan);
+      const html = `<!DOCTYPE html><html><head><title>${plan.meta.name || 'VB-ToDo Export'}</title></head><body><pre>${JSON.stringify(plan, null, 2)}</pre></body></html>`;
+      download(slug(plan.meta.name||'vb-todo')+'.html', html, 'text/html;charset=utf-8');
+    }
+
+    function exportJSON(){
+      if(!window.__PLAN__) generate();
+      const plan = window.__PLAN__; 
+      plan.ui = collectUI(plan.tasks);
+      download(slug(plan.meta.name||'vb-todo')+'.json', JSON.stringify(plan,null,2), 'application/json;charset=utf-8');
+    }
+
+    function exportCSV(){
+      if(!window.__PLAN__) generate();
+      const plan = window.__PLAN__; 
+      plan.ui = collectUI(plan.tasks);
+      const rows = [['phase','id','text','tag','due','owner','priority','effort','status','link','note','checked']];
+      for(const phase of ['pre','dev','post']){
+        (plan.tasks[phase]||[]).forEach((t,idx)=>{
+          const ui = (plan.ui[phase]||[])[idx] || {};
+          rows.push([phase, t.id, t.text, t.tag||'', ui.due||t.due||'', ui.owner||'', ui.priority||'', ui.effort||'', ui.status||'', ui.link||'', (ui.note||'').replace(/\n/g,' '), ui.checked?1:0]);
+        });
+      }
+      const csv = rows.map(r=>r.map(x=>('"' + String(x).replace(/"/g,'""') + '"')).join(',')).join('\n');
+      download(slug(plan.meta.name||'vb-todo')+'.csv', csv, 'text/csv;charset=utf-8');
+    }
+
+    function exportICS(){
+      if(!window.__PLAN__) generate();
+      const plan = window.__PLAN__; 
+      plan.ui = collectUI(plan.tasks);
+      const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//VB-ToDo//Lifecycle//CN'];
+      const add = (phase, t, ui) => {
+        const due = (ui?.due || t.due || '').replace(/-/g,''); 
+        if(!due) return;
+        const dt = 'DTSTART;VALUE=DATE:'+due;
+        const sum = `[${phase.toUpperCase()}] ${t.id} ${t.text}`.replace(/\n/g,' ');
+        const uid = (crypto && crypto.randomUUID) ? crypto.randomUUID() : (t.id+'-'+Math.random().toString(36).slice(2));
+        lines.push('BEGIN:VEVENT','UID:'+uid,'SUMMARY:'+sum,dt,'END:VEVENT');
+      };
+      for(const phase of ['pre','dev','post']){ 
+        (plan.tasks[phase]||[]).forEach((t,idx)=> add(phase, t, (plan.ui[phase]||[])[idx])); 
+      }
+      lines.push('END:VCALENDAR');
+      download(slug(plan.meta.name||'vb-todo')+'.ics', lines.join('\r\n'), 'text/calendar;charset=utf-8');
+    }
+
+    // Filters
+    function applyFilters(){
+      const q = $('#filterText')?.value?.trim()?.toLowerCase() || '';
+      const prio = $('#filterPriority')?.value || '';
+      const st = $('#filterStatus')?.value || '';
+      const view = $('.viewBtn.bg-blue-600')?.dataset?.view || 'all';
+
+      $$('#output section.phase').forEach(sec=>{
+        const phase = sec.dataset.phase;
+        sec.style.display = (view==='all' || view===phase) ? '' : 'none';
+        sec.querySelectorAll('.taskList > div').forEach(row=>{
+          const txt = row.textContent.toLowerCase();
+          const rowPrio = row.querySelector('.taskPriority')?.value;
+          const rowSt = row.querySelector('.taskStatus')?.value;
+          const matchQ = !q || txt.includes(q);
+          const matchP = !prio || prio===rowPrio;
+          const matchS = !st || st===rowSt;
+          row.style.display = (matchQ && matchP && matchS) ? '' : 'none';
+        });
+      });
+    }
+
+    // Event listeners
+    function initEventListeners() {
+      const btnGenerate = $('#btnGenerate');
+      const btnPrint = $('#btnPrint');
+      const btnExportHTML = $('#btnExportHTML');
+      const btnExportJSON = $('#btnExportJSON');
+      const btnExportCSV = $('#btnExportCSV');
+      const btnExportICS = $('#btnExportICS');
+      const btnExpandNotes = $('#btnExpandNotes');
+      const btnQuickAdd = $('#btnQuickAdd');
+      const filterText = $('#filterText');
+      const filterPriority = $('#filterPriority');
+      const filterStatus = $('#filterStatus');
+      const groupBy = $('#groupBy');
+      const startDate = $('#startDate');
+
+      if (btnGenerate) btnGenerate.addEventListener('click', generate);
+      if (btnPrint) btnPrint.addEventListener('click', ()=>window.print());
+      if (btnExportHTML) btnExportHTML.addEventListener('click', exportHTML);
+      if (btnExportJSON) btnExportJSON.addEventListener('click', exportJSON);
+      if (btnExportCSV) btnExportCSV.addEventListener('click', exportCSV);
+      if (btnExportICS) btnExportICS.addEventListener('click', exportICS);
+      
+      if (btnExpandNotes) {
+        btnExpandNotes.addEventListener('click', ()=>{
+          $$('#output .taskNote').forEach(t=>t.classList.toggle('hidden'));
+        });
+      }
+      
+      if (btnQuickAdd) {
+        btnQuickAdd.addEventListener('click', ()=>{
+          const first = $('#output section.phase'); 
+          if(!first) return; 
+          const inp = first.querySelector('.quickNewText'); 
+          if(inp){ inp.focus(); }
+        });
+      }
+
+      // Design bar listeners
+      $$('#designBar .viewBtn').forEach(btn=>btn.addEventListener('click', ()=>{
+        $$('#designBar .viewBtn').forEach(b=>{
+          b.classList.remove('bg-blue-600','text-white');
+          b.classList.add('text-gray-300', 'hover:bg-gray-700');
+        });
+        btn.classList.add('bg-blue-600','text-white');
+        btn.classList.remove('text-gray-300', 'hover:bg-gray-700');
+        applyFilters();
+      }));
+
+      if (filterText) filterText.addEventListener('input', applyFilters);
+      if (filterPriority) filterPriority.addEventListener('change', applyFilters);
+      if (filterStatus) filterStatus.addEventListener('change', applyFilters);
+      if (groupBy) groupBy.addEventListener('change', applyFilters);
+
+      // Set current date as default
+      if (startDate) startDate.value = fmt(new Date());
+    }
+
+    // Initialize
+    function init() {
+      initEventListeners();
+      generate(); // Auto-generate with default values
+      console.log('VB-ToDo module initialized');
+    }
+
+    // Run initialization after a short delay to ensure DOM is ready
+    setTimeout(init, 100);
+  })();
+</script>
