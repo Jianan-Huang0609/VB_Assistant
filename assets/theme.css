@@ -1,18 +1,36 @@
-:root{
-  /* 尺寸遵循 UI_sidebar 体验 */
-  --sb-collapsed: 72px;   /* 收起宽度：仅图标 */
-  --sb-expanded: 260px;   /* 展开宽度：图标+文字 */
+:root {
+  /* 尺寸（与之前一致） */
+  --sb-collapsed: 72px;
+  --sb-expanded: 260px;
 
-  /* 品牌与语义色（与你项目接近的紫蓝系） */
-  --brand-h: 258; --brand-s: 85%; --brand-l: 56%;
-  --brand: hsl(var(--brand-h) var(--brand-s) var(--brand-l));
-  --bg: #0b0c10; --panel: #0f1115; --text: #e6e8ef; --muted:#a6accd; --border:#1c2030;
+  /* 品牌（靛蓝系） */
+  --brand: #4f46e5;        /* Indigo-600 */
+  --brand-weak: #6366f1;   /* Indigo-500 */
+  --accent: #3b82f6;       /* Blue-500 */
+  --success: #16a34a;      /* Green-600 */
+  --warn: #f59e0b;         /* Amber-500 */
+
+  /* 浅色视觉 */
+  --bg: #f7f8fc;           /* 页面大背景（很淡） */
+  --panel: #ffffff;        /* 卡片/侧栏底色 */
+  --text: #0f172a;         /* Slate-900 */
+  --muted: #64748b;        /* Slate-500/600 */
+  --border: #e5e7eb;       /* Gray-200 */
+  --hover: #eef2ff;        /* Indigo-50 淡悬停 */
+  --active: #e0e7ff;       /* Indigo-100 选中 */
+  --shadow: 0 6px 18px rgba(2, 6, 23, .06);
+}
+
+/* 暗色主题（可选） */
+:root.dark {
+  --bg: #0b0c10;
+  --panel: #0f1115;
+  --text: #e6e8ef;
+  --muted: #a6accd;
+  --border: #1c2030;
   --hover: color-mix(in oklab, var(--brand) 10%, #ffffff 0%);
   --active: color-mix(in oklab, var(--brand) 18%, #ffffff 0%);
 }
-:root.light{
-  --bg: #f8f9fb; --panel:#ffffff; --text:#12131a; --muted:#5c627a; --border:#e6e8ef;
-  --hover: color-mix(in oklab, var(--brand) 6%, #000 0%);
-  --active: color-mix(in oklab, var(--brand) 12%, #000 0%);
-}
-html,body{height:100%;background:var(--bg);color:var(--text)}
+
+/* 基本 */
+html, body { height: 100%; background: var(--bg); color: var(--text); }
