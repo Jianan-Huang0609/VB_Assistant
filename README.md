@@ -1,7 +1,8 @@
 # VB Assistant Hub
 
 > 专业的VB.NET开发辅助平台，提升开发效率
-> 链接🔗：
+
+> 链接🔗：https://jianan-huang0609.github.io/VB_Assistant/
 
 ## 项目简介
 
