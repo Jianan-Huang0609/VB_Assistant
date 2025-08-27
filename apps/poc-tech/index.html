@@ -99,13 +99,9 @@
       <div class="flex items-center space-x-2">
         <input type="text" id="searchInput" placeholder="搜索项目..." class="border rounded px-3 py-1 w-64">
       </div>
-      <div class="ml-auto">
-        <select id="sortBy" class="border rounded px-3 py-1">
-          <option value="date">按时间排序</option>
-          <option value="name">按名称排序</option>
-          <option value="status">按状态排序</option>
-        </select>
-      </div>
+             <div class="ml-auto">
+         <!-- 排序功能暂时隐藏 -->
+       </div>
     </div>
   </section>
 
@@ -403,18 +399,9 @@
         );
       }
       
-      // Apply sorting
-      const sortBy = document.getElementById('sortBy').value;
+      // Apply sorting (default by date)
       filteredPocs.sort((a, b) => {
-        switch(sortBy) {
-          case 'name':
-            return a.name.localeCompare(b.name);
-          case 'status':
-            return a.status.localeCompare(b.status);
-          case 'date':
-          default:
-            return new Date(b.createdAt) - new Date(a.createdAt);
-        }
+        return new Date(b.createdAt) - new Date(a.createdAt);
       });
       
       if (filteredPocs.length === 0) {
@@ -430,13 +417,13 @@
     function createPoc(formData) {
       const poc = {
         id: generateId(),
-        name: formData.get('name'),
-        tech: formData.get('tech'),
-        description: formData.get('description'),
-        duration: formData.get('duration'),
-        priority: formData.get('priority'),
-        goals: formData.get('goals'),
-        resources: formData.get('resources'),
+        name: document.getElementById('pocName').value,
+        tech: document.getElementById('pocTech').value,
+        description: document.getElementById('pocDescription').value,
+        duration: document.getElementById('pocDuration').value,
+        priority: document.getElementById('pocPriority').value,
+        goals: document.getElementById('pocGoals').value,
+        resources: document.getElementById('pocResources').value,
         status: 'new',
         createdAt: new Date().toISOString()
       };
@@ -492,15 +479,13 @@
     
     document.getElementById('newPocForm').addEventListener('submit', function(e) {
       e.preventDefault();
-      const formData = new FormData(e.target);
-      createPoc(formData);
+      createPoc();
     });
     
     // Filter and search listeners
     document.getElementById('statusFilter').addEventListener('change', renderPocs);
     document.getElementById('techFilter').addEventListener('change', renderPocs);
     document.getElementById('searchInput').addEventListener('input', renderPocs);
-    document.getElementById('sortBy').addEventListener('change', renderPocs);
     
     // Initialize
     updateStats();
