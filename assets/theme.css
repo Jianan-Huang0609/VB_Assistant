@@ -1,40 +1,18 @@
-:root {
-  /* 品牌色（蓝紫科技感） */
-  --brand-h: 258;
-  --brand-s: 85%;
-  --brand-l: 56%;
+:root{
+  /* 尺寸遵循 UI_sidebar 体验 */
+  --sb-collapsed: 72px;   /* 收起宽度：仅图标 */
+  --sb-expanded: 260px;   /* 展开宽度：图标+文字 */
 
+  /* 品牌与语义色（与你项目接近的紫蓝系） */
+  --brand-h: 258; --brand-s: 85%; --brand-l: 56%;
   --brand: hsl(var(--brand-h) var(--brand-s) var(--brand-l));
-  --brand-weak: hsl(var(--brand-h) 70% 70%);
-
-  /* 语义色 */
-  --accent: hsl(200 95% 55%);
-  --success: hsl(150 60% 45%);
-  --warn: hsl(40 95% 55%);
-
-  /* 明亮主题 */
-  --bg: hsl(0 0% 99%);
-  --bg-elev: hsl(0 0% 100%);
-  --text: hsl(222 36% 12%);
-  --muted: hsl(222 16% 46%);
-  --border: hsl(220 15% 90%);
-  --sidebar-bg: hsl(225 14% 97%);
-  --sidebar-active: hsl(var(--brand-h) 100% 97%);
+  --bg: #0b0c10; --panel: #0f1115; --text: #e6e8ef; --muted:#a6accd; --border:#1c2030;
+  --hover: color-mix(in oklab, var(--brand) 10%, #ffffff 0%);
+  --active: color-mix(in oklab, var(--brand) 18%, #ffffff 0%);
 }
-
-/* 暗黑主题 */
-:root.dark {
-  --bg: hsl(225 14% 8%);
-  --bg-elev: hsl(225 14% 12%);
-  --text: hsl(210 20% 96%);
-  --muted: hsl(215 12% 70%);
-  --border: hsl(220 14% 22%);
-  --sidebar-bg: hsl(225 14% 10%);
-  --sidebar-active: hsl(var(--brand-h) 35% 22%);
+:root.light{
+  --bg: #f8f9fb; --panel:#ffffff; --text:#12131a; --muted:#5c627a; --border:#e6e8ef;
+  --hover: color-mix(in oklab, var(--brand) 6%, #000 0%);
+  --active: color-mix(in oklab, var(--brand) 12%, #000 0%);
 }
-
-html, body {
-  height: 100%;
-  background: var(--bg);
-  color: var(--text);
-}
+html,body{height:100%;background:var(--bg);color:var(--text)}
