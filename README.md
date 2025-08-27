@@ -2,6 +2,8 @@
 
 > 专业的VB.NET开发辅助平台，提升开发效率
 
+> 链接🔗：https://jianan-huang0609.github.io/VB_Assistant/
+
 ## 项目简介
 
 VB Assistant Hub 是一个专为VB.NET开发者设计的综合工具平台，集成项目管理、技术验证、代码生成和调试辅助等核心功能，旨在提升VB开发效率和代码质量。
