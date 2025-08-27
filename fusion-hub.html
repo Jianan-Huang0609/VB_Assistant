@@ -102,6 +102,7 @@
     .grid-bento { display:grid; grid-template-columns: repeat(12, minmax(0,1fr)); gap: 1rem; }
     .chip { border-radius: 9999px; padding: 2px 8px; font-size: 12px; border: 1px solid rgba(0,0,0,.08); }
     .row-hover:hover { background: rgba(0,0,0,.04); }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
     @media (max-width: 768px) {
       .sidebar {
         transform: translateX(-100%);
@@ -115,6 +116,19 @@
       .sidebar-toggle {
         display: block;
       }
+    }
+    @media print { 
+      header, #toolbar, #exportBar, #designBar, .sidebar, .sidebar-toggle { 
+        display: none !important; 
+      } 
+      .card { 
+        box-shadow:none !important; 
+        border:1px solid #e5e7eb; 
+      } 
+      section { 
+        break-inside: avoid; 
+        page-break-inside: avoid; 
+      } 
     }
   </style>
 </head>
@@ -301,25 +315,36 @@
         <section id="designBar" class="card rounded-2xl p-4 mb-6">
           <div class="flex flex-wrap gap-3 items-center">
             <div class="flex items-center gap-2">
-              <label class="text-sm">显示选项:</label>
-              <input type="checkbox" id="showNotes" class="w-4 h-4" checked>
-              <label for="showNotes" class="text-sm">备注</label>
-              <input type="checkbox" id="showDue" class="w-4 h-4" checked>
-              <label for="showDue" class="text-sm">截止日期</label>
-              <input type="checkbox" id="showOwner" class="w-4 h-4" checked>
-              <label for="showOwner" class="text-sm">负责人</label>
-              <input type="checkbox" id="showPriority" class="w-4 h-4" checked>
-              <label for="showPriority" class="text-sm">优先级</label>
-              <input type="checkbox" id="showEffort" class="w-4 h-4" checked>
-              <label for="showEffort" class="text-sm">工作量</label>
-              <input type="checkbox" id="showStatus" class="w-4 h-4" checked>
-              <label for="showStatus" class="text-sm">状态</label>
-              <input type="checkbox" id="showLink" class="w-4 h-4">
-              <label for="showLink" class="text-sm">链接</label>
+              <span class="text-sm text-gray-600">视图：</span>
+              <button data-view="all" class="viewBtn px-3 py-1.5 border rounded bg-black text-white">全部</button>
+              <button data-view="pre" class="viewBtn px-3 py-1.5 border rounded">仅阶段一</button>
+              <button data-view="dev" class="viewBtn px-3 py-1.5 border rounded">仅阶段二</button>
+              <button data-view="post" class="viewBtn px-3 py-1.5 border rounded">仅阶段三</button>
             </div>
             <div class="flex items-center gap-2">
-              <button id="btnExpandNotes" class="px-3 py-1.5 border rounded">展开/收起备注</button>
-              <button id="btnQuickAdd" class="px-3 py-1.5 border rounded">快速新增任务</button>
+              <span class="text-sm text-gray-600">过滤：</span>
+              <input id="filterText" class="border rounded px-2 py-1" placeholder="关键词/标签/ID…" />
+              <select id="filterPriority" class="border rounded px-2 py-1">
+                <option value="">优先级（全部）</option>
+                <option value="P0">P0</option>
+                <option value="P1">P1</option>
+                <option value="P2">P2</option>
+                <option value="P3">P3</option>
+              </select>
+              <select id="filterStatus" class="border rounded px-2 py-1">
+                <option value="">状态（全部）</option>
+                <option value="open">未开始</option>
+                <option value="doing">进行中</option>
+                <option value="done">已完成</option>
+              </select>
+            </div>
+            <div class="flex items-center gap-2">
+              <span class="text-sm text-gray-600">分组：</span>
+              <select id="groupBy" class="border rounded px-2 py-1">
+                <option value="none">不分组</option>
+                <option value="tag">按标签</option>
+                <option value="priority">按优先级</option>
+              </select>
             </div>
           </div>
         </section>
@@ -514,8 +539,8 @@
     renderPocProjects();
 
     // ===== VB-ToDo Functionality =====
-    // This would include the full VB-ToDo functionality from the original file
-    // For brevity, I'm including the basic structure - you can copy the full functionality from vibe-todo.html
+    // 这里将集成完整的Vibe Todo功能
+    // 为了保持代码简洁，这里只包含基本结构
     
     // Basic VB-ToDo initialization
     document.getElementById('btnGenerate').addEventListener('click', () => {
