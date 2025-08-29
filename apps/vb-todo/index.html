@@ -1,0 +1,628 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Vibe Coding 全周期 To‑Do 生成器 · 多模板 + 设计增强</title>
+  <base href="./">
+  <script src="https://cdn.tailwindcss.com"></script>
+  <meta name="color-scheme" content="light" />
+  <style>
+    .card { box-shadow: 0 10px 15px -3px rgba(0,0,0,.1), 0 4px 6px -4px rgba(0,0,0,.1); }
+    .badge { font-size: 12px; border: 1px solid rgba(0,0,0,.08); padding: 2px 8px; border-radius: 9999px; }
+    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
+    .grid-bento { display:grid; grid-template-columns: repeat(12, minmax(0,1fr)); gap: 1rem; }
+    .chip { border-radius: 9999px; padding: 2px 8px; font-size: 12px; border: 1px solid rgba(0,0,0,.08); }
+    .row-hover:hover { background: rgba(0,0,0,.04); }
+    @media print { header, #toolbar, #exportBar, #designBar { display: none !important; } .card { box-shadow:none !important; border:1px solid #e5e7eb; } section { break-inside: avoid; page-break-inside: avoid; } }
+  </style>
+</head>
+<body class="bg-white text-gray-900">
+  <header class="sticky top-0 z-20 bg-white/90 backdrop-blur border-b">
+    <div class="max-w-7xl mx-auto px-4 py-3 flex items-center justify-between">
+      <h1 class="text-xl md:text-2xl font-black">Vibe Coding 全周期 To‑Do 生成器 · 多模板 + 设计增强</h1>
+      <div id="toolbar" class="flex gap-2">
+        <button id="btnGenerate" class="px-3 py-2 border rounded hover:bg-gray-50">生成清单</button>
+        <button id="btnPrint" class="px-3 py-2 border rounded hover:bg-gray-50">打印 / 导出 PDF</button>
+      </div>
+    </div>
+  </header>
+
+  <main class="max-w-7xl mx-auto px-4 py-6">
+    <!-- Project meta -->
+    <section class="card rounded-2xl p-6 mb-6">
+      <h2 class="text-lg font-bold mb-4">项目参数</h2>
+      <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <div>
+          <label class="block text-sm text-gray-700 mb-1">项目名称</label>
+          <input id="projectName" class="w-full border rounded px-3 py-2" placeholder="例如：手势可控 3D 架子鼓" />
+        </div>
+        <div>
+          <label class="block text-sm text-gray-700 mb-1">开始日期</label>
+          <input id="startDate" type="date" class="w-full border rounded px-3 py-2" />
+        </div>
+        <div>
+          <label class="block text-sm text-gray-700 mb-1">周期长度（周）</label>
+          <input id="weeks" type="number" min="1" value="4" class="w-full border rounded px-3 py-2" />
+        </div>
+        <div class="md:col-span-2">
+          <label class="block text-sm text-gray-700 mb-1">想法 / 概念（一句话）</label>
+          <input id="idea" class="w-full border rounded px-3 py-2" placeholder="例如：网页端 3D 架子鼓 + 手势控制 + 录音" />
+        </div>
+        <div>
+          <label class="block text-sm text-gray-700 mb-1">模板</label>
+          <select id="template" class="w-full border rounded px-3 py-2">
+            <option value="vibe_ra">Vibe + RA 追溯（完整）</option>
+            <option value="vibe_only">Vibe（精简）</option>
+            <option value="web_ra">网页开发</option>
+            <option value="miniapp_ra">小程序开发</option>
+            <option value="plugin_ra">浏览器插件开发</option>
+            <option value="app_ra">移动端 App 开发</option>
+            <option value="fullstack_ra">全栈开发（Next.js + Prisma + Postgres）</option>
+          </select>
+        </div>
+      </div>
+    </section>
+
+    <!-- Design / Control Bar -->
+    <section id="designBar" class="card rounded-2xl p-4 mb-6">
+      <div class="flex flex-wrap gap-3 items-center">
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-gray-600">视图：</span>
+          <button data-view="all" class="viewBtn px-3 py-1.5 border rounded bg-black text-white">全部</button>
+          <button data-view="pre" class="viewBtn px-3 py-1.5 border rounded">仅阶段一</button>
+          <button data-view="dev" class="viewBtn px-3 py-1.5 border rounded">仅阶段二</button>
+          <button data-view="post" class="viewBtn px-3 py-1.5 border rounded">仅阶段三</button>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-gray-600">过滤：</span>
+          <input id="filterText" class="border rounded px-2 py-1" placeholder="关键词/标签/ID…" />
+          <select id="filterPriority" class="border rounded px-2 py-1">
+            <option value="">优先级（全部）</option>
+            <option value="P0">P0</option>
+            <option value="P1">P1</option>
+            <option value="P2">P2</option>
+            <option value="P3">P3</option>
+          </select>
+          <select id="filterStatus" class="border rounded px-2 py-1">
+            <option value="">状态（全部）</option>
+            <option value="open">未开始</option>
+            <option value="doing">进行中</option>
+            <option value="done">已完成</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-2">
+          <span class="text-sm text-gray-600">分组：</span>
+          <select id="groupBy" class="border rounded px-2 py-1">
+            <option value="none">不分组</option>
+            <option value="tag">按标签</option>
+            <option value="priority">按优先级</option>
+          </select>
+        </div>
+        <div class="flex items-center gap-2">
+          <button id="btnExpandNotes" class="px-3 py-1.5 border rounded">展开/收起备注</button>
+          <button id="btnQuickAdd" class="px-3 py-1.5 border rounded">快速新增任务</button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Export bar -->
+    <section id="exportBar" class="card rounded-2xl p-4 mb-6 flex flex-wrap gap-2 items-center">
+      <button id="btnExportHTML" class="px-3 py-2 border rounded hover:bg-gray-50">导出自包含 HTML</button>
+      <button id="btnExportJSON" class="px-3 py-2 border rounded hover:bg-gray-50">导出 JSON</button>
+      <button id="btnExportCSV" class="px-3 py-2 border rounded hover:bg-gray-50">导出 CSV</button>
+      <button id="btnExportICS" class="px-3 py-2 border rounded hover:bg-gray-50">导出 ICS（日历）</button>
+      <span class="text-xs text-gray-500">自包含 HTML 会内嵌当前状态，打开即复现</span>
+    </section>
+
+    <!-- Output -->
+    <section id="output" class="space-y-6"></section>
+  </main>
+
+  <footer class="mt-10 border-t">
+    <div class="max-w-7xl mx-auto px-4 py-6 text-sm text-gray-600 flex items-center justify-between">
+      <div>© <span id="year"></span> Vibe Coding</div>
+      <div class="opacity-80">@Jianan · 医械RA圈 · 爱游泳的辩论选手</div>
+    </div>
+  </footer>
+
+  <script id="embedded-plan" type="application/json">null</script>
+
+  <script>
+    // ===== Utilities =====
+    const $ = s => document.querySelector(s);
+    const $$ = s => Array.from(document.querySelectorAll(s));
+    const fmt = d => { const y=d.getFullYear(), m=('0'+(d.getMonth()+1)).slice(-2), x=('0'+d.getDate()).slice(-2); return y+'-'+m+'-'+x; };
+    function addDays(d, n){ const x=new Date(d); x.setDate(x.getDate()+n); return x; }
+    function slug(s){ return (s||'vibe-plan').toLowerCase().replace(/[^a-z0-9]+/g,'-').replace(/(^-|-$)/g,''); }
+    function download(name, text, mime='text/plain;charset=utf-8'){ const blob=new Blob([text],{type:mime}); const url=URL.createObjectURL(blob); const a=document.createElement('a'); a.href=url; a.download=name; a.click(); setTimeout(()=>URL.revokeObjectURL(url),500); }
+    function pad(n){ return (n<10?'0':'')+n; }
+    function toICSDate(dateStr){ if(!dateStr) return ''; const d=new Date(dateStr+'T00:00:00'); return d.getFullYear()+pad(d.getMonth()+1)+pad(d.getDate()); }
+
+    // ===== Tag colors =====
+    const TAG_COLORS = {
+      '需求':'#0ea5e9','设计':'#a855f7','验收':'#10b981','根目录':'#64748b','资源':'#22c55e','文档':'#f59e0b','版本':'#ef4444','资料包':'#8b5cf6',
+      'MVP':'#0ea5e9','模块-3D':'#22c55e','模块-手势':'#06b6d4','模块-逻辑':'#f97316','模块-音频':'#eab308','模块-动效':'#a855f7','调试':'#ef4444','验证':'#10b981',
+      '交付':'#0ea5e9','日志':'#f59e0b','追溯':'#64748b','RA-变更':'#ef4444','RA-风险':'#f97316','RA-验证':'#22c55e','RA-恢复':'#06b6d4','维护':'#0ea5e9'
+    };
+
+    // ===== Task Model =====
+    function baseVibe(template){
+      const pre = [
+        {text:'明确目标场景（例如：网页端3D架子鼓可手势控制，敲击打出声音）', tag:'需求', required:true},
+        {text:'输出功能清单（必做 / 可选 / 未来升级）', tag:'需求', required:true},
+        {text:'绘制效果图 / 流程图（UI 布局、功能逻辑）', tag:'设计'},
+        {text:'定义验收标准（如声音延迟 ≤ 0.2s，击打准确率 ≥ 90%）', tag:'验收'},
+        {text:'创建固定目录结构 /public/models /public/assets/samples /wasm/mediapipe /src /docs', tag:'根目录', required:true},
+        {text:'将Input资源（模型、音频、依赖文件）放到指定位置', tag:'资源'},
+        {text:'编写根目录说明文档（用途一句话 + 核心资源清单）', tag:'文档'},
+        {text:'版本控制初始化（git init + 第一次 commit）', tag:'版本', required:true},
+        {text:'功能需求例子整理与确认', tag:'资料包'},
+        {text:'依赖清单（Three.js / Tone.js / MediaPipe）', tag:'资料包'},
+        {text:'Config 文件（如 API.json 等）', tag:'资料包'}
+      ];
+      const dev = [
+        {text:'MVP：模型能加载', tag:'MVP', required:true},
+        {text:'MVP：基本交互可用且能录屏留痕', tag:'MVP', required:true},
+        {text:'模块：3D 模型加载与摆放（可独立运行）', tag:'模块-3D', required:true},
+        {text:'模块：手势/输入识别（骨架可视化/事件触发）', tag:'模块-手势'},
+        {text:'模块：击打/命中判定（区域+阈值）', tag:'模块-逻辑'},
+        {text:'模块：音频播放（多音色测试）', tag:'模块-音频'},
+        {text:'模块：动效（击打闪光 / 振动效果）', tag:'模块-动效'},
+        {text:'调试：Console / Network / Elements 定位并修复错误', tag:'调试', required:true},
+        {text:'回归验证：位置→击打→音效→动效 全链路通过', tag:'验证', required:true},
+        {text:'中期版本管理：打 Tag（如 v0.1-mvp）', tag:'版本'},
+        {text:'中期版本管理：分支开发 & 可回滚记录', tag:'版本'}
+      ];
+      const post = [
+        {text:'README（项目简介 / 依赖 / 结构 / 使用）', tag:'交付', required:true},
+        {text:'模块功能清单（含完成状态）', tag:'交付'},
+        {text:'截图 / 演示视频（证明效果达成）', tag:'交付'},
+        {text:'更新日志（版本号 + 日期 + 变化描述）', tag:'日志', required:true},
+        {text:'问题修复历史（问题 → 原因 → 解决方案）', tag:'追溯'},
+        {text:'保留旧版本源码备份', tag:'追溯'},
+        {text:'生命周期追溯：需求变更记录（时间/原因/影响评估）', tag:'RA-变更', required: template!=='vibe_only'},
+        {text:'生命周期追溯：风险评估记录（延迟、性能瓶颈等）', tag:'RA-风险', required: template!=='vibe_only'},
+        {text:'生命周期追溯：测试与验证记录（输入/输出/结果）', tag:'RA-验证', required: template!=='vibe_only'},
+        {text:'生命周期追溯：回滚与恢复方案文档', tag:'RA-恢复', required: template!=='vibe_only'},
+        {text:'后续维护：依赖升级检查', tag:'维护'},
+        {text:'后续维护：收集使用反馈（交互体验、性能问题）', tag:'维护'},
+        {text:'后续维护：计划新功能（基于反馈与法规变化）', tag:'维护'}
+      ];
+      return {pre,dev,post};
+    }
+
+    function getLifecycleTasks(template){
+      let def = baseVibe(template);
+
+      // 场景化加料（在不改变你的三阶段骨架下，替换括号示例 & 增补关键项）
+      if(template === 'web_ra'){
+        def.pre.unshift({text:'明确Web场景（例如：响应式 SPA，SSR/CSR 策略）', tag:'需求', required:true});
+        def.pre.push({text:'前端技术栈（React/Vue/Tailwind）与后端接口（REST/GraphQL）约定', tag:'设计'});
+        def.dev.push({text:'路由/状态管理（Router+State）与数据拉取策略（SWR/Cache）', tag:'模块-逻辑'});
+        def.dev.push({text:'性能与可访问性基线：Lighthouse ≥ 90 / a11y 对齐', tag:'验证'});
+        def.post.unshift({text:'部署与CDN（Vercel/Netlify/自建）+ HTTPS 与缓存策略', tag:'交付'});
+      }
+      if(template === 'miniapp_ra'){
+        def.pre[0].text = '明确小程序场景（例如：微信商城，支持登录/支付/消息）';
+        def.pre.push({text:'目标平台（微信/支付宝/抖音）+ 审核类目/资质核对', tag:'资料包'});
+        def.dev.unshift({text:'小程序配置：app.json / 分包 / tabBar / sitemap', tag:'模块-逻辑', required:true});
+        def.dev.push({text:'用户授权/登录（openid/unionid）与云函数通信', tag:'模块-逻辑'});
+        def.dev.push({text:'真机多机型兼容与 setData 性能优化', tag:'验证'});
+        def.post.unshift({text:'生成提审包 + 审核说明/截图/流程图', tag:'交付'});
+      }
+      if(template === 'plugin_ra'){
+        def.pre[0].text = '明确插件功能（例如：自动翻译网页文本，侧边栏弹出）';
+        def.pre.push({text:'目标浏览器（Chrome/Edge/Firefox）+ 权限列表（manifest）', tag:'资料包'});
+        def.dev.unshift({text:'Manifest 编写（v3）与权限最小化原则', tag:'模块-逻辑', required:true});
+        def.dev.push({text:'content/background/popup 三端消息通信', tag:'模块-逻辑'});
+        def.dev.push({text:'DevTools 调试与本地/同步存储策略', tag:'调试'});
+        def.post.unshift({text:'打包 .zip 并上传各商店（商店截图+描述+隐私）', tag:'交付'});
+      }
+      if(template === 'app_ra'){
+        def.pre[0].text = '明确移动端场景（例如：跨平台健身记录，离线 + 云同步）';
+        def.pre.push({text:'目标平台（iOS/Android/Flutter/RN）+ 隐私与合规（权限/SDK）', tag:'资料包'});
+        def.dev.unshift({text:'项目初始化与证书签名配置（iOS/Android）', tag:'模块-逻辑', required:true});
+        def.dev.push({text:'离线缓存/本地数据库与同步策略', tag:'模块-逻辑'});
+        def.dev.push({text:'性能调优（冷启动≤2s/内存/耗电）与崩溃率 ≤ 0.5%', tag:'验证'});
+        def.post.unshift({text:'打包签名（.ipa / .aab）并提交 App Store / Google Play', tag:'交付'});
+      }
+      if(template === 'fullstack_ra'){
+        def.pre.unshift(
+          { text: '确定技术栈与运行环境：Next.js(App Router)+TS+Tailwind+Prisma+Postgres+Vercel', tag: '需求', required: true },
+          { text: '信息架构 & ER 图（User/Project/Task/Roles）', tag: '设计', required: true },
+          { text: '仓库初始化：ESLint/Prettier/EditorConfig/提交规范', tag: '版本', required: true }
+        );
+        def.pre.push(
+          { text: '环境与密钥：.env.local / DATABASE_URL / NEXTAUTH_SECRET', tag: '资源' },
+          { text: 'API 规范：REST 资源建模（分页/过滤/排序/错误码）', tag: '文档' }
+        );
+
+        def.dev.unshift(
+          { text: '数据库接入：Prisma schema/迁移/种子数据', tag: '模块-逻辑', required: true },
+          { text: '鉴权：NextAuth（Email/OAuth）+ 受保护路由', tag: '模块-逻辑', required: true }
+        );
+        def.dev.push(
+          { text: 'CRUD：/api/projects & /api/tasks（SWR/React Query 缓存策略）', tag: '模块-逻辑' },
+          { text: '表单与校验：react-hook-form + zod（前后端一致）', tag: '模块-逻辑' },
+          { text: '文件上传：对象存储（签名直传/CDN 缓存）', tag: '模块-逻辑' },
+          { text: '日志/监控：结构化日志 + Sentry + /healthz', tag: '调试' },
+          { text: '性能：SSR/ISR 策略 + 图片优化 + Lighthouse ≥ 90', tag: '验证' }
+        );
+
+        def.post.unshift(
+          { text: 'CI/CD：GitHub Actions（lint/test/build/deploy）+ 预览环境', tag: '交付', required: true },
+          { text: '部署：Vercel 自定义域名/HTTPS/环境变量', tag: '交付', required: true }
+        );
+        def.post.push(
+          { text: '测试：Vitest ≥ 20 条 + Playwright 3 条关键路径', tag: '验证' },
+          { text: '安全基线：依赖扫描、CSP/Headers、输入与权限校验', tag: 'RA-风险' },
+          { text: '运行手册：启动/迁移/回滚/告警/备份策略', tag: '追溯' }
+        );
+      }
+
+
+      // Assign LCY IDs
+      let n=1; const next = ()=> 'LCY-'+String(n++).padStart(3,'0');
+      for(const phase of ['pre','dev','post']){ def[phase] = def[phase].map(t=>({...t, id: next()})); }
+
+      // vibe_only: 仅保留 required
+      if(template === 'vibe_only'){
+        for(const k of ['pre','dev','post']) def[k] = def[k].filter(t=>!!t.required);
+      }
+      return def;
+    }
+
+    // ===== Scheduling =====
+    function distributeDates(tasks, startDate, weeks){
+      const sd = startDate ? new Date(startDate) : new Date();
+      const totalDays = Math.max(7, weeks*7);
+      const lastWeekStart = addDays(sd, totalDays - 7);
+      const assign = (arr, from, to) => {
+        if(!arr.length) return; const span = Math.max(1, Math.floor((to - from) / arr.length));
+        arr.forEach((t,i)=>{ t.due = fmt(addDays(from, i*span)); });
+      };
+      assign(tasks.pre, sd, addDays(sd, 6)); // 前 1 周
+      assign(tasks.dev, addDays(sd, 7), addDays(lastWeekStart, -1)); // 中间
+      assign(tasks.post, lastWeekStart, addDays(sd, totalDays-1)); // 最后 1 周
+      return tasks;
+    }
+
+    // ===== Rendering =====
+    function tagChip(tag){
+      const color = TAG_COLORS[tag] || '#e5e7eb';
+      return `<span class="chip" style="border-color:${color}; background: ${color}20; color:#111">#${tag||''}</span>`;
+    }
+
+    function rowControlsHTML(checked, owner, due, priority='P2', effort='2', status='open', link='', note=''){
+      return `
+        <input type="checkbox" class="taskCheck accent-black" ${checked?'checked':''}>
+        <div class="flex-1 min-w-0">
+          <div class="text-xs sm:text-sm text-gray-500 flex flex-wrap gap-2 items-center mt-1">
+            <select class="taskPriority border rounded px-1.5 py-1 text-xs">
+              ${['P0','P1','P2','P3'].map(p=>`<option ${p===priority?'selected':''}>${p}</option>`).join('')}
+            </select>
+            <select class="taskStatus border rounded px-1.5 py-1 text-xs">
+              ${[['open','未开始'],['doing','进行中'],['done','已完成']].map(([v,l])=>`<option value="${v}" ${v===status?'selected':''}>${l}</option>`).join('')}
+            </select>
+            <label class="text-gray-500">Effort</label>
+            <input type="number" min="1" max="13" value="${effort}" class="taskEffort w-16 border rounded px-1.5 py-1 text-xs" />
+            <label class="text-gray-500">负责人</label>
+            <input type="text" class="text-sm border rounded px-2 py-1 w-24 taskOwner" placeholder="负责人" value="${owner||''}">
+            <input type="date" class="text-sm border rounded px-2 py-1 taskDue" value="${due||''}">
+          </div>
+          <div class="mt-2 flex gap-2 items-center">
+            <input type="url" class="taskLink flex-1 border rounded px-2 py-1 text-sm" placeholder="关联链接（PR/文档/需求）" value="${link||''}">
+            <button class="toggleNote px-2 py-1 border rounded text-xs">备注</button>
+          </div>
+          <textarea class="taskNote mt-2 w-full border rounded p-2 text-sm hidden" rows="2" placeholder="补充说明...">${note||''}</textarea>
+        </div>`;
+    }
+
+    function render(tasks, meta, ui){
+      const out = $('#output'); out.innerHTML = '';
+
+      // Summary
+      const summary = document.createElement('div');
+      summary.className = 'grid-bento mb-6';
+      summary.innerHTML = `
+        <div class="card rounded-2xl p-6 col-span-12 lg:col-span-8">
+          <div class="text-sm text-gray-500">项目</div>
+          <div class="text-2xl font-bold">${meta.name || '未命名项目'}</div>
+          <div class="text-sm text-gray-600 mt-1">概念：${meta.idea || '—'} · 周期：${meta.weeks} 周 · 开始：${meta.startDate || '今天'}</div>
+          <div class="mt-3 flex gap-2 flex-wrap">
+            <span class="badge">模板：${({
+              'vibe_only':'Vibe 精简', 'vibe_ra':'Vibe + RA 追溯','web_ra':'网页开发','miniapp_ra':'小程序开发','plugin_ra':'浏览器插件开发','app_ra':'移动端 App 开发'
+            })[meta.template] || meta.template}</span>
+          </div>
+        </div>
+        <div class="card rounded-2xl p-6 col-span-12 lg:col-span-4">
+          <div class="text-sm text-gray-500 mb-2">进度</div>
+          <div class="w-full bg-gray-100 h-2 rounded"><div id="progressBar" class="h-2 rounded bg-black" style="width:0%"></div></div>
+          <div class="flex justify-between text-sm text-gray-600 mt-2">
+            <div><span id="doneCount">0</span>/<span id="totalCount">0</span> 完成</div>
+            <div id="progressPct">0%</div>
+          </div>
+        </div>`;
+      out.appendChild(summary);
+
+      const phases = [
+        { key:'pre',  title:'阶段一｜开发前：需求与地基', color:'from-orange-100 to-white' },
+        { key:'dev',  title:'阶段二｜开发中：MVP→模块化升级', color:'from-blue-100 to-white' },
+        { key:'post', title:'阶段三｜开发后：保存、维护与追溯', color:'from-emerald-100 to-white' }
+      ];
+
+      phases.forEach(p => {
+        const list = tasks[p.key];
+        const sec = document.createElement('section');
+        sec.className = 'phase card rounded-2xl p-6 bg-gradient-to-br '+p.color;
+        sec.dataset.phase = p.key;
+        sec.innerHTML = `<div class="flex items-center justify-between mb-4">
+            <h3 class="text-lg font-bold">${p.title}</h3>
+            <div class="text-sm text-gray-600 flex items-center gap-2">
+              <span>新增：</span>
+              <input class="quickNewText border rounded px-2 py-1 text-sm" placeholder="输入任务内容后回车"/>
+            </div>
+          </div>`;
+
+        if(!list || !list.length){
+          sec.innerHTML += `<div class="text-sm text-gray-600">（该阶段暂无任务）</div>`;
+        } else {
+          const ul = document.createElement('div'); ul.className = 'space-y-3 taskList';
+          list.forEach((t, idx) => {
+            const row = document.createElement('div');
+            row.className = 'row-hover bg-white/90 border rounded-lg px-3 py-3 flex gap-3';
+            const checked = ui && ui[p.key] && ui[p.key][idx] ? ui[p.key][idx].checked : false;
+            const owner = ui && ui[p.key] && ui[p.key][idx] ? (ui[p.key][idx].owner||'') : '';
+            const due   = ui && ui[p.key] && ui[p.key][idx] ? (ui[p.key][idx].due||t.due||'') : (t.due||'');
+            const priority = ui && ui[p.key] && ui[p.key][idx] ? (ui[p.key][idx].priority||'P2') : 'P2';
+            const effort   = ui && ui[p.key] && ui[p.key][idx] ? (ui[p.key][idx].effort||'2') : '2';
+            const status   = ui && ui[p.key] && ui[p.key][idx] ? (ui[p.key][idx].status||'open') : 'open';
+            const link     = ui && ui[p.key] && ui[p.key][idx] ? (ui[p.key][idx].link||'') : '';
+            const note     = ui && ui[p.key] && ui[p.key][idx] ? (ui[p.key][idx].note||'') : '';
+
+            row.innerHTML = `
+              <div class="shrink-0 mt-1 text-xs sm:text-sm w-24">
+                <div class="mono text-gray-500">${t.id}</div>
+                <div class="mt-1">${tagChip(t.tag)}</div>
+              </div>
+              <div class="flex-1 min-w-0">
+                <div class="text-sm">${t.text}</div>
+                ${rowControlsHTML(checked, owner, due, priority, effort, status, link, note)}
+              </div>`;
+            ul.appendChild(row);
+          });
+          sec.appendChild(ul);
+        }
+        out.appendChild(sec);
+      });
+
+      // listeners
+      out.addEventListener('click', e=>{
+        if(e.target.classList.contains('toggleNote')){
+          const ta = e.target.closest('.flex-1').querySelector('.taskNote');
+          if(ta){ ta.classList.toggle('hidden'); }
+        }
+      });
+
+      // quick add
+      out.querySelectorAll('.quickNewText').forEach(inp=>{
+        inp.addEventListener('keydown', ev=>{
+          if(ev.key==='Enter' && ev.target.value.trim()){
+            const phase = ev.target.closest('.phase').dataset.phase;
+            addQuickTask(phase, ev.target.value.trim());
+            ev.target.value='';
+          }
+        })
+      });
+
+      // Progress calc
+      function recalc(){
+        const checks = out.querySelectorAll('.taskCheck');
+        const done = Array.from(checks).filter(c => c.checked).length;
+        const total = checks.length;
+        $('#doneCount').textContent = done;
+        $('#totalCount').textContent = total;
+        const pct = total ? Math.round(done*100/total) : 0;
+        $('#progressPct').textContent = pct+'%';
+        $('#progressBar').style.width = pct+'%';
+      }
+      out.addEventListener('change', e => { if(e.target.classList.contains('taskCheck')) recalc(); });
+      recalc();
+
+      applyFilters();
+    }
+
+    function collectUI(tasks){
+      const ui = { pre:[], dev:[], post:[] };
+      const phases = ['pre','dev','post'];
+      const sections = $$('#output > section.phase');
+      phases.forEach((phase, pi) => {
+        const list = tasks[phase] || [];
+        const sec = sections[pi];
+        const rows = sec ? sec.querySelectorAll('.taskList > div') : [];
+        const arr = [];
+        list.forEach((t,i) => {
+          const row = rows[i];
+          const checked = row ? row.querySelector('.taskCheck')?.checked : false;
+          const due = row ? row.querySelector('.taskDue')?.value : '';
+          const owner = row ? row.querySelector('.taskOwner')?.value : '';
+          const priority = row ? row.querySelector('.taskPriority')?.value : 'P2';
+          const effort = row ? row.querySelector('.taskEffort')?.value : '2';
+          const status = row ? row.querySelector('.taskStatus')?.value : 'open';
+          const link = row ? row.querySelector('.taskLink')?.value : '';
+          const note = row ? row.querySelector('.taskNote')?.value : '';
+          arr.push({checked, due, owner, priority, effort, status, link, note});
+        });
+        ui[phase]=arr;
+      });
+      return ui;
+    }
+
+    // ===== Global state & actions =====
+    function generate(){
+      const meta = {
+        name: $('#projectName').value.trim(),
+        idea: $('#idea').value.trim(),
+        startDate: $('#startDate').value,
+        weeks: Math.max(1, parseInt($('#weeks').value || '4', 10)),
+        template: $('#template').value
+      };
+      let tasks = getLifecycleTasks(meta.template);
+      tasks = distributeDates(tasks, meta.startDate, meta.weeks);
+      render(tasks, meta, window.__PLAN__?.ui || null);
+      window.__PLAN__ = { meta, tasks, ui: collectUI(tasks) };
+    }
+
+    function addQuickTask(phase, text){
+      if(!window.__PLAN__) return; const plan = window.__PLAN__;
+      const id = (()=>{ const all = ['pre','dev','post'].flatMap(k=>plan.tasks[k]); const max = all.reduce((m,t)=>Math.max(m, parseInt(t.id.split('-')[1]||'0',10)),0); return 'LCY-'+String(max+1).padStart(3,'0');})();
+      plan.tasks[phase].push({ id, text, tag:'设计' });
+      render(plan.tasks, plan.meta, plan.ui);
+    }
+
+    function exportHTML(){
+      if(!window.__PLAN__) generate();
+      const plan = window.__PLAN__; plan.ui = collectUI(plan.tasks);
+      const payload = JSON.stringify(plan);
+      const clone = document.documentElement.cloneNode(true);
+      const holder = clone.querySelector('#embedded-plan'); if(holder) holder.textContent = payload;
+      clone.querySelector('#projectName').setAttribute('value', plan.meta.name||'');
+      if(plan.meta.startDate) clone.querySelector('#startDate').setAttribute('value', plan.meta.startDate);
+      clone.querySelector('#idea').setAttribute('value', plan.meta.idea||'');
+      clone.querySelector('#weeks').setAttribute('value', plan.meta.weeks);
+      clone.querySelector('#template').value = plan.meta.template||'vibe_ra';
+      const html = '<!DOCTYPE html>'+clone.outerHTML;
+      download(slug(plan.meta.name||'vibe-plan')+'.html', html, 'text/html;charset=utf-8');
+    }
+
+    function exportJSON(){
+      if(!window.__PLAN__) generate();
+      const plan = window.__PLAN__; plan.ui = collectUI(plan.tasks);
+      download(slug(plan.meta.name||'vibe-plan')+'.json', JSON.stringify(plan,null,2), 'application/json;charset=utf-8');
+    }
+
+    
+    function exportCSV(){
+      if(!window.__PLAN__) generate();
+      const plan = window.__PLAN__; plan.ui = collectUI(plan.tasks);
+      const rows = [['phase','id','text','tag','due','owner','priority','effort','status','link','note','checked']];
+      for(const phase of ['pre','dev','post']){
+        (plan.tasks[phase]||[]).forEach((t,idx)=>{
+          const ui = (plan.ui[phase]||[])[idx] || {};
+          rows.push([phase, t.id, t.text, t.tag||'', ui.due||t.due||'', ui.owner||'', ui.priority||'', ui.effort||'', ui.status||'', ui.link||'', (ui.note||'').replace(/\n/g,' '), ui.checked?1:0]);
+        });
+      }
+      const csv = rows.map(r=>r.map(x=>('"' + String(x).replace(/"/g,'""') + '"')).join(',')).join('\n');
+      download(slug(plan.meta.name||'vibe-plan')+'.csv', csv, 'text/csv;charset=utf-8');
+    }
+
+    function exportICS(){
+      if(!window.__PLAN__) generate();
+      const plan = window.__PLAN__; plan.ui = collectUI(plan.tasks);
+      const lines = ['BEGIN:VCALENDAR','VERSION:2.0','PRODID:-//Vibe Coding//Lifecycle//CN'];
+      const add = (phase, t, ui) => {
+        const due = (ui?.due || t.due || '').replace(/-/g,''); if(!due) return;
+        const dt = 'DTSTART;VALUE=DATE:'+due;
+        const sum = `[${phase.toUpperCase()}] ${t.id} ${t.text}`.replace(/\n/g,' ');
+        const uid = (crypto && crypto.randomUUID) ? crypto.randomUUID() : (t.id+'-'+Math.random().toString(36).slice(2));
+        lines.push('BEGIN:VEVENT','UID:'+uid,'SUMMARY:'+sum,dt,'END:VEVENT');
+      };
+      for(const phase of ['pre','dev','post']){ (plan.tasks[phase]||[]).forEach((t,idx)=> add(phase, t, (plan.ui[phase]||[])[idx])); }
+      lines.push('END:VCALENDAR');
+      download(slug(plan.meta.name||'vibe-plan')+'.ics', lines.join('\r\n'), 'text/calendar;charset=utf-8');
+    }
+
+    // ===== Filters / Grouping =====
+    function applyFilters(){
+      const q = $('#filterText').value.trim().toLowerCase();
+      const prio = $('#filterPriority').value;
+      const st = $('#filterStatus').value;
+      const view = $('.viewBtn.bg-black')?.dataset.view || 'all';
+
+      $$('#output section.phase').forEach(sec=>{
+        const phase = sec.dataset.phase;
+        sec.style.display = (view==='all' || view===phase) ? '' : 'none';
+        sec.querySelectorAll('.taskList > div').forEach(row=>{
+          const txt = row.textContent.toLowerCase();
+          const rowPrio = row.querySelector('.taskPriority')?.value;
+          const rowSt = row.querySelector('.taskStatus')?.value;
+          const matchQ = !q || txt.includes(q);
+          const matchP = !prio || prio===rowPrio;
+          const matchS = !st || st===rowSt;
+          row.style.display = (matchQ && matchP && matchS) ? '' : 'none';
+        });
+      });
+
+      // Grouping (simple visual sort by tag/priority)
+      const group = $('#groupBy').value;
+      if(group==='none') return;
+      $$('#output section.phase').forEach(sec=>{
+        const list = sec.querySelector('.taskList'); if(!list) return;
+        const rows = Array.from(list.children);
+        rows.sort((a,b)=>{
+          if(group==='tag'){
+            const ta = a.querySelector('.chip')?.textContent || ''; const tb = b.querySelector('.chip')?.textContent || '';
+            return ta.localeCompare(tb);
+          }
+          if(group==='priority'){
+            const pa = a.querySelector('.taskPriority')?.value || 'P2';
+            const pb = b.querySelector('.taskPriority')?.value || 'P2';
+            return pa.localeCompare(pb);
+          }
+          return 0;
+        });
+        rows.forEach(r=>list.appendChild(r));
+      });
+    }
+
+    // ===== Init =====
+    function tryRestoreEmbedded(){
+      try{
+        const raw = $('#embedded-plan').textContent; if(!raw || raw==='null') return false;
+        const plan = JSON.parse(raw); if(!plan || !plan.meta || !plan.tasks) return false;
+        $('#projectName').value = plan.meta.name || '';
+        $('#startDate').value = plan.meta.startDate || '';
+        $('#idea').value = plan.meta.idea || '';
+        $('#weeks').value = plan.meta.weeks || 4;
+        $('#template').value = plan.meta.template || 'vibe_ra';
+        render(plan.tasks, plan.meta, plan.ui || null);
+        window.__PLAN__ = plan; return true;
+      }catch(e){ return false; }
+    }
+
+    $('#year').textContent = new Date().getFullYear();
+    $('#startDate').value = fmt(new Date());
+
+    // buttons
+    $('#btnGenerate').addEventListener('click', generate);
+    $('#btnExportHTML').addEventListener('click', exportHTML);
+    $('#btnExportJSON').addEventListener('click', exportJSON);
+    $('#btnExportCSV').addEventListener('click', exportCSV);
+    $('#btnExportICS').addEventListener('click', exportICS);
+    $('#btnPrint').addEventListener('click', ()=>window.print());
+
+    // design bar listeners
+    $$('#designBar .viewBtn').forEach(btn=>btn.addEventListener('click', ()=>{
+      $$('#designBar .viewBtn').forEach(b=>b.classList.remove('bg-black','text-white'));
+      btn.classList.add('bg-black','text-white');
+      applyFilters();
+    }));
+    $('#filterText').addEventListener('input', applyFilters);
+    $('#filterPriority').addEventListener('change', applyFilters);
+    $('#filterStatus').addEventListener('change', applyFilters);
+    $('#groupBy').addEventListener('change', applyFilters);
+    $('#btnExpandNotes').addEventListener('click', ()=>{
+      $$('#output .taskNote').forEach(t=>t.classList.toggle('hidden'));
+    });
+    $('#btnQuickAdd').addEventListener('click', ()=>{
+      const first = $('#output section.phase'); if(!first) return; const inp = first.querySelector('.quickNewText'); if(inp){ inp.focus(); }
+    });
+
+    // auto init
+    if(!tryRestoreEmbedded()){
+      generate();
+    }
+  </script>
+</body>
+</html>
