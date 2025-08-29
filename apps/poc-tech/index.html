@@ -85,21 +85,6 @@
     .form-group label{display:block;margin-bottom:6px;font-weight:500;color:var(--charcoal)}
     .form-group select,.form-group textarea{width:100%;padding:10px;border:1px solid var(--sage);border-radius:8px;font-size:14px}
     .form-group textarea{resize:vertical;min-height:80px}
-
-    /* 认证状态提示 */
-    .auth-status {
-      position: fixed;
-      top: 20px;
-      right: 20px;
-      background: rgba(0,0,0,0.8);
-      color: white;
-      padding: 10px 15px;
-      border-radius: 8px;
-      font-size: 12px;
-      z-index: 1000;
-    }
-    .auth-status.connected { background: rgba(46, 125, 50, 0.8); }
-    .auth-status.disconnected { background: rgba(211, 119, 6, 0.8); }
   </style>
 </head>
 <body>
@@ -364,7 +349,8 @@
           end_date: state.endDate,
           milestone: state.milestone,
           matrix_data: state.matrixData,
-          last_updated: new Date().toISOString()
+          last_updated: new Date().toISOString(),
+          updated_at: new Date().toISOString()
         };
 
         let result;

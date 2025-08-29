@@ -128,6 +128,9 @@
 
   <script id="embedded-plan" type="application/json">null</script>
 
+  <!-- Supabase SDK -->
+  <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
   <script>
     // ===== Utilities =====
     const $ = s => document.querySelector(s);
@@ -623,6 +626,186 @@
     if(!tryRestoreEmbedded()){
       generate();
     }
+
+    // Supabase 集成
+    let supabaseClient;
+    let currentUser = null;
+    let projectId = null;
+
+    // 初始化 Supabase
+    async function initSupabase() {
+      try {
+        supabaseClient = window.supabase.createClient(
+          'https://ebbitzscqizogrfyfklh.supabase.co',
+          'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImViYml0enNjcWl6b2dyZnlma2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0NDAzNTMsImV4cCI6MjA3MjAxNjM1M30.f0gSCCHJ_sEFV9R6IGOcr3CYnaVrZsnIxP3VDFP_RZM'
+        );
+
+        // 检查认证状态
+        const { data: { session } } = await supabaseClient.auth.getSession();
+        if (session) {
+          currentUser = session.user;
+          updateAuthStatus(true);
+          await loadFromSupabase();
+        } else {
+          updateAuthStatus(false);
+          // 如果没有登录，使用本地存储
+          if (!tryRestoreEmbedded()) {
+            generate();
+          }
+        }
+      } catch (error) {
+        console.error('Supabase 初始化失败:', error);
+        // 降级到本地存储
+        if (!tryRestoreEmbedded()) {
+          generate();
+        }
+      }
+    }
+
+    // 更新认证状态显示
+    function updateAuthStatus(isLoggedIn) {
+      const toolbar = document.getElementById('toolbar');
+      if (isLoggedIn) {
+        // 添加保存按钮
+        if (!document.getElementById('btnSave')) {
+          const saveBtn = document.createElement('button');
+          saveBtn.id = 'btnSave';
+          saveBtn.className = 'px-3 py-2 bg-green-600 text-white rounded hover:bg-green-700';
+          saveBtn.textContent = '💾 保存到云端';
+          saveBtn.onclick = saveToSupabase;
+          toolbar.insertBefore(saveBtn, toolbar.firstChild);
+        }
+      } else {
+        // 移除保存按钮
+        const saveBtn = document.getElementById('btnSave');
+        if (saveBtn) saveBtn.remove();
+      }
+    }
+
+    // 保存到 Supabase
+    async function saveToSupabase() {
+      if (!currentUser) {
+        alert('❌ 请先登录');
+        return;
+      }
+
+      if (!window.__PLAN__) {
+        alert('❌ 请先生成项目计划');
+        return;
+      }
+
+      try {
+        const plan = window.__PLAN__;
+        const projectData = {
+          owner: currentUser.id,
+          name: plan.meta.name || '未命名项目',
+          description: plan.meta.idea || '',
+          template: plan.meta.template || 'vibe_ra',
+          start_date: plan.meta.startDate,
+          weeks: plan.meta.weeks || 4,
+          idea: plan.meta.idea || '',
+          tasks_data: plan.tasks,
+          ui_data: plan.ui || {},
+          last_updated: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        };
+
+        let result;
+        if (projectId) {
+          // 更新现有项目
+          result = await supabaseClient
+            .from('todo_projects')
+            .update(projectData)
+            .eq('id', projectId)
+            .eq('owner', currentUser.id)
+            .select()
+            .single();
+        } else {
+          // 创建新项目
+          result = await supabaseClient
+            .from('todo_projects')
+            .insert(projectData)
+            .select()
+            .single();
+          if (result.data) {
+            projectId = result.data.id;
+          }
+        }
+
+        if (result.error) throw result.error;
+        
+        alert('✅ 数据已保存到云端！');
+        console.log('保存成功:', result.data);
+      } catch (error) {
+        console.error('保存失败:', error);
+        alert('❌ 保存失败: ' + error.message);
+      }
+    }
+
+    // 从 Supabase 加载
+    async function loadFromSupabase() {
+      if (!currentUser) {
+        console.log('用户未登录，无法从云端加载');
+        return;
+      }
+
+      try {
+        // 加载最新的项目数据
+        const { data, error } = await supabaseClient
+          .from('todo_projects')
+          .select('*')
+          .eq('owner', currentUser.id)
+          .order('last_updated', { ascending: false })
+          .limit(1)
+          .single();
+
+        if (error && error.code !== 'PGRST116') { // PGRST116 表示没有找到数据
+          throw error;
+        }
+
+        if (data) {
+          projectId = data.id;
+          const plan = {
+            meta: {
+              name: data.name || '',
+              startDate: data.start_date || '',
+              idea: data.idea || '',
+              weeks: data.weeks || 4,
+              template: data.template || 'vibe_ra'
+            },
+            tasks: data.tasks_data || {},
+            ui: data.ui_data || {}
+          };
+          
+          // 更新UI
+          $('#projectName').value = plan.meta.name || '';
+          $('#startDate').value = plan.meta.startDate || '';
+          $('#idea').value = plan.meta.idea || '';
+          $('#weeks').value = plan.meta.weeks || 4;
+          $('#template').value = plan.meta.template || 'vibe_ra';
+          
+          render(plan.tasks, plan.meta, plan.ui);
+          window.__PLAN__ = plan;
+          
+          console.log('从云端加载成功:', data);
+        } else {
+          console.log('云端没有找到项目数据');
+          generate();
+        }
+      } catch (error) {
+        console.error('从云端加载失败:', error);
+        alert('❌ 从云端加载失败: ' + error.message);
+        // 降级到本地存储
+        if (!tryRestoreEmbedded()) {
+          generate();
+        }
+      }
+    }
+
+    // 页面加载完成后初始化 Supabase
+    window.addEventListener('load', function() {
+      setTimeout(initSupabase, 1000);
+    });
   </script>
 </body>
 </html>
