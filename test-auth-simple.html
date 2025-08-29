@@ -36,6 +36,12 @@
             margin: 5px;
         }
         button:hover { background: #0056b3; }
+        button.secondary {
+            background: #6c757d;
+        }
+        button.secondary:hover {
+            background: #545b62;
+        }
         input {
             width: 100%;
             padding: 8px;
@@ -48,6 +54,29 @@
             padding: 15px;
             border: 1px solid #ddd;
             border-radius: 5px;
+        }
+        .auth-tabs {
+            display: flex;
+            margin-bottom: 15px;
+        }
+        .auth-tab {
+            flex: 1;
+            padding: 10px;
+            text-align: center;
+            background: #f8f9fa;
+            border: 1px solid #ddd;
+            cursor: pointer;
+        }
+        .auth-tab.active {
+            background: #007bff;
+            color: white;
+            border-color: #007bff;
+        }
+        .auth-content {
+            display: none;
+        }
+        .auth-content.active {
+            display: block;
         }
     </style>
 </head>
@@ -66,22 +95,41 @@
         </div>
 
         <div class="test-section">
-            <h3>2. 邮箱登录测试</h3>
-            <input type="email" id="test-email" placeholder="输入邮箱地址" value="test@example.com">
-            <button onclick="testEmailAuth()">测试邮箱登录</button>
-            <div id="email-result"></div>
+            <h3>2. 用户认证测试</h3>
+            
+            <div class="auth-tabs">
+                <div class="auth-tab active" onclick="switchTab('email')">邮箱登录</div>
+                <div class="auth-tab" onclick="switchTab('password')">密码登录</div>
+                <div class="auth-tab" onclick="switchTab('register')">用户注册</div>
+            </div>
+
+            <!-- 邮箱登录 -->
+            <div id="email-content" class="auth-content active">
+                <input type="email" id="test-email" placeholder="输入邮箱地址" value="test@example.com">
+                <button onclick="testEmailAuth()">测试邮箱登录</button>
+                <div id="email-result"></div>
+            </div>
+
+            <!-- 密码登录 -->
+            <div id="password-content" class="auth-content">
+                <input type="email" id="password-email" placeholder="邮箱" value="test@example.com">
+                <input type="password" id="password" placeholder="密码" value="test123456">
+                <button onclick="testPasswordAuth()">测试密码登录</button>
+                <div id="password-result"></div>
+            </div>
+
+            <!-- 用户注册 -->
+            <div id="register-content" class="auth-content">
+                <input type="email" id="register-email" placeholder="邮箱地址" value="test@example.com">
+                <input type="password" id="register-password" placeholder="密码（至少6位）" value="test123456">
+                <input type="password" id="register-confirm" placeholder="确认密码" value="test123456">
+                <button onclick="registerUser()">注册用户</button>
+                <div id="register-result"></div>
+            </div>
         </div>
 
         <div class="test-section">
-            <h3>3. 密码登录测试</h3>
-            <input type="email" id="password-email" placeholder="邮箱" value="test@example.com">
-            <input type="password" id="password" placeholder="密码" value="test123456">
-            <button onclick="testPasswordAuth()">测试密码登录</button>
-            <div id="password-result"></div>
-        </div>
-
-        <div class="test-section">
-            <h3>4. 当前状态</h3>
+            <h3>3. 当前状态</h3>
             <div id="current-status"></div>
         </div>
     </div>
@@ -91,6 +139,21 @@
 
     <script>
         let supabaseClient;
+
+        // 切换标签页
+        function switchTab(tabName) {
+            // 隐藏所有内容
+            document.querySelectorAll('.auth-content').forEach(content => {
+                content.classList.remove('active');
+            });
+            document.querySelectorAll('.auth-tab').forEach(tab => {
+                tab.classList.remove('active');
+            });
+
+            // 显示选中的内容
+            document.getElementById(tabName + '-content').classList.add('active');
+            event.target.classList.add('active');
+        }
 
         // 初始化
         async function init() {
@@ -234,6 +297,66 @@
             }
         }
 
+        // 注册用户
+        async function registerUser() {
+            const email = document.getElementById('register-email').value;
+            const password = document.getElementById('register-password').value;
+            const confirmPassword = document.getElementById('register-confirm').value;
+            const resultDiv = document.getElementById('register-result');
+            
+            if (!email || !password || !confirmPassword) {
+                resultDiv.innerHTML = '❌ 请填写所有字段';
+                resultDiv.className = 'status error';
+                return;
+            }
+            
+            if (password !== confirmPassword) {
+                resultDiv.innerHTML = '❌ 两次输入的密码不一致';
+                resultDiv.className = 'status error';
+                return;
+            }
+            
+            if (password.length < 6) {
+                resultDiv.innerHTML = '❌ 密码长度至少6位';
+                resultDiv.className = 'status error';
+                return;
+            }
+            
+            if (!supabaseClient) {
+                resultDiv.innerHTML = '❌ Supabase 客户端未初始化';
+                resultDiv.className = 'status error';
+                return;
+            }
+            
+            resultDiv.innerHTML = '正在注册用户...';
+            
+            try {
+                const { data, error } = await supabaseClient.auth.signUp({
+                    email: email,
+                    password: password,
+                    options: {
+                        emailRedirectTo: 'https://jianan-huang0609.github.io/VB_Assistant/test-auth-simple.html'
+                    }
+                });
+                
+                if (error) {
+                    if (error.message.includes('User already registered')) {
+                        resultDiv.innerHTML = '⚠️ 用户已存在，请直接登录';
+                        resultDiv.className = 'status info';
+                    } else {
+                        resultDiv.innerHTML = '❌ 注册失败: ' + error.message;
+                        resultDiv.className = 'status error';
+                    }
+                } else {
+                    resultDiv.innerHTML = '✅ 注册成功！请检查邮箱确认账户。';
+                    resultDiv.className = 'status success';
+                }
+            } catch (error) {
+                resultDiv.innerHTML = '❌ 注册失败: ' + error.message;
+                resultDiv.className = 'status error';
+            }
+        }
+
         // 检查认证状态
         async function checkAuthStatus() {
             const statusDiv = document.getElementById('current-status');
@@ -262,7 +385,7 @@
                     statusDiv.innerHTML = `
                         <div class="status info">
                             <strong>ℹ️ 用户未登录</strong><br>
-                            请使用邮箱登录或密码登录功能进行测试
+                            请先注册用户或使用邮箱登录
                         </div>
                     `;
                 }
