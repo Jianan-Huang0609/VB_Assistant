@@ -443,7 +443,7 @@
                 const { error } = await supabaseClient.auth.signInWithOAuth({
                     provider: 'google',
                     options: {
-                        redirectTo: 'https://jianan-huang0609.github.io/VB_Assistant/test-auth-final.html'
+                        redirectTo: 'https://jianan-huang0609.github.io/VB_Assistant/auth-callback.html'
                     }
                 });
                 
@@ -468,7 +468,7 @@
                 const { error } = await supabaseClient.auth.signInWithOAuth({
                     provider: 'github',
                     options: {
-                        redirectTo: 'https://jianan-huang0609.github.io/VB_Assistant/test-auth-final.html'
+                        redirectTo: 'https://jianan-huang0609.github.io/VB_Assistant/auth-callback.html'
                     }
                 });
                 

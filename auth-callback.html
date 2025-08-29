@@ -1,0 +1,190 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>认证回调处理</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 600px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+            text-align: center;
+        }
+        .status {
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        .loading {
+            display: inline-block;
+            width: 20px;
+            height: 20px;
+            border: 3px solid #f3f3f3;
+            border-top: 3px solid #3498db;
+            border-radius: 50%;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin {
+            0% { transform: rotate(0deg); }
+            100% { transform: rotate(360deg); }
+        }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            font-size: 16px;
+        }
+        button:hover { background: #0056b3; }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔄 认证回调处理</h1>
+        
+        <div id="status" class="status info">
+            <div class="loading"></div>
+            正在处理认证回调...
+        </div>
+
+        <div id="user-info" style="display: none;">
+            <h3>✅ 登录成功！</h3>
+            <div id="user-details"></div>
+            <button onclick="goToMain()">前往主应用</button>
+            <button onclick="goToTest()">前往测试页面</button>
+            <button onclick="logout()">退出登录</button>
+        </div>
+
+        <div id="error-info" style="display: none;">
+            <h3>❌ 登录失败</h3>
+            <div id="error-details"></div>
+            <button onclick="goToTest()">返回测试页面</button>
+        </div>
+    </div>
+
+    <!-- Supabase SDK -->
+    <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
+
+    <script>
+        let supabaseClient;
+
+        // 初始化
+        async function init() {
+            try {
+                if (typeof window.supabase === 'undefined') {
+                    throw new Error('Supabase SDK 未加载');
+                }
+
+                supabaseClient = window.supabase.createClient(
+                    'https://ebbitzscqizogrfyfklh.supabase.co',
+                    'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImViYml0enNjcWl6b2dyZnlma2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0NDAzNTMsImV4cCI6MjA3MjAxNjM1M30.f0gSCCHJ_sEFV9R6IGOcr3CYnaVrZsnIxP3VDFP_RZM'
+                );
+                
+                // 处理认证回调
+                handleAuthCallback();
+                
+            } catch (error) {
+                showError('初始化失败: ' + error.message);
+                console.error('初始化错误:', error);
+            }
+        }
+
+        // 处理认证回调
+        async function handleAuthCallback() {
+            try {
+                const statusDiv = document.getElementById('status');
+                statusDiv.innerHTML = '<div class="loading"></div> 正在验证认证状态...';
+                
+                // 获取当前会话
+                const { data: { session }, error } = await supabaseClient.auth.getSession();
+                
+                if (error) {
+                    throw error;
+                }
+
+                if (session && session.user) {
+                    // 登录成功
+                    showSuccess(session.user);
+                } else {
+                    // 没有会话，可能是直接访问此页面
+                    showError('未找到有效的认证会话。请重新登录。');
+                }
+                
+            } catch (error) {
+                showError('认证处理失败: ' + error.message);
+                console.error('认证回调错误:', error);
+            }
+        }
+
+        // 显示成功信息
+        function showSuccess(user) {
+            const statusDiv = document.getElementById('status');
+            const userInfoDiv = document.getElementById('user-info');
+            const userDetailsDiv = document.getElementById('user-details');
+            
+            statusDiv.style.display = 'none';
+            userInfoDiv.style.display = 'block';
+            
+            userDetailsDiv.innerHTML = `
+                <p><strong>邮箱:</strong> ${user.email}</p>
+                <p><strong>用户ID:</strong> ${user.id}</p>
+                <p><strong>登录方式:</strong> ${user.app_metadata?.provider || '邮箱'}</p>
+                <p><strong>登录时间:</strong> ${new Date().toLocaleString()}</p>
+            `;
+        }
+
+        // 显示错误信息
+        function showError(message) {
+            const statusDiv = document.getElementById('status');
+            const errorInfoDiv = document.getElementById('error-info');
+            const errorDetailsDiv = document.getElementById('error-details');
+            
+            statusDiv.style.display = 'none';
+            errorInfoDiv.style.display = 'block';
+            errorDetailsDiv.innerHTML = `<p>${message}</p>`;
+        }
+
+        // 前往主应用
+        function goToMain() {
+            window.location.href = 'https://jianan-huang0609.github.io/VB_Assistant/';
+        }
+
+        // 前往测试页面
+        function goToTest() {
+            window.location.href = 'https://jianan-huang0609.github.io/VB_Assistant/test-auth-final.html';
+        }
+
+        // 退出登录
+        async function logout() {
+            try {
+                await supabaseClient.auth.signOut();
+                alert('已退出登录');
+                goToTest();
+            } catch (error) {
+                console.error('退出登录失败:', error);
+                alert('退出登录失败: ' + error.message);
+            }
+        }
+
+        // 页面加载时初始化
+        window.addEventListener('load', function() {
+            setTimeout(init, 1000);
+        });
+    </script>
+</body>
+</html>
