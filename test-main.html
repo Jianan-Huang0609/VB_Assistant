@@ -1,0 +1,98 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>主页面测试</title>
+    <style>
+        body {
+            font-family: Arial, sans-serif;
+            max-width: 800px;
+            margin: 50px auto;
+            padding: 20px;
+            background: #f5f5f5;
+        }
+        .container {
+            background: white;
+            padding: 30px;
+            border-radius: 10px;
+            box-shadow: 0 2px 10px rgba(0,0,0,0.1);
+        }
+        .status {
+            padding: 15px;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+        .success { background: #d4edda; color: #155724; border: 1px solid #c3e6cb; }
+        .error { background: #f8d7da; color: #721c24; border: 1px solid #f5c6cb; }
+        .info { background: #d1ecf1; color: #0c5460; border: 1px solid #bee5eb; }
+        button {
+            background: #007bff;
+            color: white;
+            border: none;
+            padding: 12px 24px;
+            border-radius: 5px;
+            cursor: pointer;
+            margin: 10px;
+            font-size: 16px;
+        }
+        button:hover { background: #0056b3; }
+        iframe {
+            width: 100%;
+            height: 400px;
+            border: 1px solid #ddd;
+            border-radius: 5px;
+            margin: 20px 0;
+        }
+    </style>
+</head>
+<body>
+    <div class="container">
+        <h1>🔧 主页面路径测试</h1>
+        
+        <div class="status info">
+            <strong>测试目标：</strong>验证应用页面是否能正常加载
+        </div>
+
+        <h3>测试 1: PoC-Tech 应用</h3>
+        <button onclick="testApp('poc-tech')">测试 PoC-Tech 加载</button>
+        <div id="poc-tech-result"></div>
+        <iframe id="poc-tech-frame" style="display: none;"></iframe>
+
+        <h3>测试 2: VB-ToDo 应用</h3>
+        <button onclick="testApp('vb-todo')">测试 VB-ToDo 加载</button>
+        <div id="vb-todo-result"></div>
+        <iframe id="vb-todo-frame" style="display: none;"></iframe>
+
+        <h3>测试 3: 直接访问链接</h3>
+        <button onclick="window.open('./apps/poc-tech/index.html', '_blank')">新窗口打开 PoC-Tech</button>
+        <button onclick="window.open('./apps/vb-todo/index.html', '_blank')">新窗口打开 VB-ToDo</button>
+
+        <h3>测试 4: 认证测试页面</h3>
+        <button onclick="window.open('./test-auth-final.html', '_blank')">打开认证测试</button>
+        <button onclick="window.open('./auth-callback.html', '_blank')">打开认证回调</button>
+    </div>
+
+    <script>
+        function testApp(appName) {
+            const resultDiv = document.getElementById(appName + '-result');
+            const frame = document.getElementById(appName + '-frame');
+            
+            resultDiv.innerHTML = '<div class="status info">正在测试 ' + appName + ' 应用...</div>';
+            frame.style.display = 'block';
+            
+            const url = './apps/' + appName + '/index.html';
+            frame.src = url;
+            
+            // 监听 iframe 加载事件
+            frame.onload = function() {
+                resultDiv.innerHTML = '<div class="status success">✅ ' + appName + ' 应用加载成功！</div>';
+            };
+            
+            frame.onerror = function() {
+                resultDiv.innerHTML = '<div class="status error">❌ ' + appName + ' 应用加载失败！</div>';
+            };
+        }
+    </script>
+</body>
+</html>
