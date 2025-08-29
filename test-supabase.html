@@ -86,9 +86,6 @@
 
     <!-- Supabase SDK -->
     <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-    
-    <!-- 你的配置 -->
-    <script src="./supabase-config.js"></script>
 
     <script>
         let supabaseClient;
@@ -96,8 +93,13 @@
         // 初始化
         async function init() {
             try {
+                // 检查 Supabase SDK 是否正确加载
+                if (typeof window.supabase === 'undefined') {
+                    throw new Error('Supabase SDK 未加载，请检查网络连接');
+                }
+
                 // 创建 Supabase 客户端
-                supabaseClient = supabase.createClient(
+                supabaseClient = window.supabase.createClient(
                     'https://ebbitzscqizogrfyfklh.supabase.co',
                     'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJpc3MiOiJzdXBhYmFzZSIsInJlZiI6ImViYml0enNjcWl6b2dyZnlma2xoIiwicm9sZSI6ImFub24iLCJpYXQiOjE3NTY0NDAzNTMsImV4cCI6MjA3MjAxNjM1M30.f0gSCCHJ_sEFV9R6IGOcr3CYnaVrZsnIxP3VDFP_RZM'
                 );
@@ -111,6 +113,7 @@
             } catch (error) {
                 document.getElementById('status').innerHTML = '❌ 初始化失败: ' + error.message;
                 document.getElementById('status').className = 'status error';
+                console.error('初始化错误:', error);
             }
         }
 
@@ -120,6 +123,10 @@
             resultDiv.innerHTML = '正在测试连接...';
             
             try {
+                if (!supabaseClient) {
+                    throw new Error('Supabase 客户端未初始化');
+                }
+
                 const { data, error } = await supabaseClient.from('profiles').select('count').limit(1);
                 
                 if (error) {
@@ -137,6 +144,7 @@
             } catch (error) {
                 resultDiv.innerHTML = '❌ 连接测试失败: ' + error.message;
                 resultDiv.className = 'status error';
+                console.error('连接测试错误:', error);
             }
         }
 
@@ -147,6 +155,12 @@
             
             if (!email) {
                 resultDiv.innerHTML = '❌ 请输入邮箱地址';
+                resultDiv.className = 'status error';
+                return;
+            }
+            
+            if (!supabaseClient) {
+                resultDiv.innerHTML = '❌ Supabase 客户端未初始化';
                 resultDiv.className = 'status error';
                 return;
             }
@@ -171,6 +185,7 @@
             } catch (error) {
                 resultDiv.innerHTML = '❌ 认证测试失败: ' + error.message;
                 resultDiv.className = 'status error';
+                console.error('认证测试错误:', error);
             }
         }
 
@@ -180,6 +195,10 @@
             resultDiv.innerHTML = '正在测试数据操作...';
             
             try {
+                if (!supabaseClient) {
+                    throw new Error('Supabase 客户端未初始化');
+                }
+
                 // 检查用户是否已登录
                 const { data: { user } } = await supabaseClient.auth.getUser();
                 
@@ -208,6 +227,7 @@
             } catch (error) {
                 resultDiv.innerHTML = '❌ 数据操作测试失败: ' + error.message;
                 resultDiv.className = 'status error';
+                console.error('数据操作测试错误:', error);
             }
         }
 
@@ -216,6 +236,15 @@
             const statusDiv = document.getElementById('current-status');
             
             try {
+                if (!supabaseClient) {
+                    statusDiv.innerHTML = `
+                        <div class="status error">
+                            <strong>❌ Supabase 客户端未初始化</strong>
+                        </div>
+                    `;
+                    return;
+                }
+
                 const { data: { user } } = await supabaseClient.auth.getUser();
                 
                 if (user) {
@@ -261,11 +290,15 @@
                         ${error.message}
                     </div>
                 `;
+                console.error('状态检查错误:', error);
             }
         }
 
         // 页面加载时初始化
-        window.addEventListener('load', init);
+        window.addEventListener('load', function() {
+            // 等待 Supabase SDK 加载完成
+            setTimeout(init, 1000);
+        });
     </script>
 </body>
 </html>
