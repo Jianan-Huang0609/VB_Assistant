@@ -34,7 +34,7 @@ class SupabaseAPI {
     const { error } = await this.supabase.auth.signInWithOtp({ 
       email,
       options: {
-        emailRedirectTo: window.location.origin + '/auth-callback.html'
+        emailRedirectTo: 'https://jianan-huang0609.github.io/VB_Assistant/auth-callback.html'
       }
     });
     return { error };
@@ -44,7 +44,7 @@ class SupabaseAPI {
     const { error } = await this.supabase.auth.signInWithOAuth({
       provider: 'google',
       options: {
-        redirectTo: window.location.origin + '/auth-callback.html'
+        redirectTo: 'https://jianan-huang0609.github.io/VB_Assistant/auth-callback.html'
       }
     });
     return { error };
@@ -54,7 +54,7 @@ class SupabaseAPI {
     const { error } = await this.supabase.auth.signInWithOAuth({
       provider: 'github',
       options: {
-        redirectTo: window.location.origin + '/auth-callback.html'
+        redirectTo: 'https://jianan-huang0609.github.io/VB_Assistant/auth-callback.html'
       }
     });
     return { error };
