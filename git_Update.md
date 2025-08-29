@@ -1,5 +1,32 @@
 # VB Assistant Hub - Git 更新日志
 
+## v1.2.0 - 2024-12-19
+* 🚀 **Supabase 后端集成** - 完整的云端数据持久化解决方案
+  - 集成 Supabase Auth 用户认证系统（邮箱、Google、GitHub OAuth）
+  - 实现 PostgreSQL 数据库数据持久化
+  - 支持 Supabase Storage 文件存储
+  - 完整的认证回调处理和重定向机制
+* 🔐 **用户认证系统** - 安全的用户登录和管理
+  - 邮箱魔法链接登录
+  - Google OAuth 第三方登录
+  - GitHub OAuth 第三方登录
+  - 用户资料管理和会话管理
+* 💾 **数据持久化** - 云端数据同步和备份
+  - PoC-Tech 应用数据云端保存
+  - 用户项目数据自动同步
+  - 本地存储作为备用方案
+  - 实时数据更新和状态同步
+* 🔧 **技术架构升级** - 现代化全栈架构
+  - 前端：HTML/CSS/JavaScript + Supabase SDK
+  - 后端：Supabase (Auth + PostgreSQL + Storage)
+  - 部署：GitHub Pages 静态托管
+  - 安全：Row Level Security (RLS) 数据保护
+* 🎯 **问题修复** - 解决关键部署和功能问题
+  - 修复 GitHub Pages 404 重定向问题
+  - 解决 OAuth 认证回调路径问题
+  - 优化认证状态管理和错误处理
+  - 完善用户界面和交互体验
+
 ## v1.1.7 - 2024-12-19
 * 实现iframe基础的独立应用切换方案
 * 将PoC-Tech和VB-ToDo作为独立模块集成
