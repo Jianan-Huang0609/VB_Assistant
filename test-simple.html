@@ -1,0 +1,96 @@
+<!DOCTYPE html>
+<html lang="zh-CN">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>VB Assistant - 简单测试</title>
+  <style>
+    body {
+      font-family: Arial, sans-serif;
+      margin: 20px;
+      background: #f5f5f5;
+    }
+    .test-section {
+      background: white;
+      padding: 20px;
+      margin: 20px 0;
+      border-radius: 8px;
+      box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+    }
+    .success { color: green; }
+    .error { color: red; }
+    .warning { color: orange; }
+  </style>
+</head>
+<body>
+  <h1>VB Assistant - 系统诊断</h1>
+  
+  <div class="test-section">
+    <h2>1. 基础页面测试</h2>
+    <p class="success">✅ 此页面可以正常显示</p>
+    <p>当前时间: <span id="current-time"></span></p>
+  </div>
+
+  <div class="test-section">
+    <h2>2. 主页面链接测试</h2>
+    <p><a href="index.html" target="_blank">打开主页面</a></p>
+    <p><a href="login.html" target="_blank">打开登录页面</a></p>
+  </div>
+
+  <div class="test-section">
+    <h2>3. 应用页面链接测试</h2>
+    <p><a href="apps/poc-tech/index.html" target="_blank">打开 PoC-Tech 页面</a></p>
+    <p><a href="apps/vb-todo/index.html" target="_blank">打开 VB-ToDo 页面</a></p>
+  </div>
+
+  <div class="test-section">
+    <h2>4. JavaScript 测试</h2>
+    <div id="js-test">正在测试 JavaScript...</div>
+  </div>
+
+  <div class="test-section">
+    <h2>5. 文件存在性检查</h2>
+    <div id="file-check">正在检查文件...</div>
+  </div>
+
+  <script>
+    // 显示当前时间
+    document.getElementById('current-time').textContent = new Date().toLocaleString();
+
+    // JavaScript 测试
+    document.getElementById('js-test').innerHTML = '<span class="success">✅ JavaScript 正常工作</span>';
+
+    // 文件存在性检查
+    const filesToCheck = [
+      'index.html',
+      'login.html',
+      'apps/poc-tech/index.html',
+      'apps/vb-todo/index.html',
+      'assets/theme.css',
+      'assets/sidebar.css',
+      'assets/app.js',
+      'supabase-config.js'
+    ];
+
+    const fileCheckDiv = document.getElementById('file-check');
+    let checkResults = '';
+
+    filesToCheck.forEach(file => {
+      fetch(file, { method: 'HEAD' })
+        .then(response => {
+          if (response.ok) {
+            checkResults += `<p class="success">✅ ${file} 存在</p>`;
+          } else {
+            checkResults += `<p class="error">❌ ${file} 不存在 (${response.status})</p>`;
+          }
+        })
+        .catch(error => {
+          checkResults += `<p class="error">❌ ${file} 检查失败: ${error.message}</p>`;
+        })
+        .finally(() => {
+          fileCheckDiv.innerHTML = checkResults;
+        });
+    });
+  </script>
+</body>
+</html>
