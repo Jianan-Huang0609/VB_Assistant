@@ -129,175 +129,100 @@
           </select>
         </div>
         <div>
-          <label class="small muted">项目名称</label>
-          <input type="text" id="projectName" placeholder="输入项目名称" />
+          <label class="small muted">子版本号</label>
+          <input type="text" id="subVersion" placeholder="例如：2025.08.21-a" />
         </div>
-        <div>
-          <label class="small muted">项目描述</label>
-          <input type="text" id="projectDescription" placeholder="简要描述项目目标" />
+        <div style="display:flex;align-items:flex-end;gap:8px">
+          <button class="btn ok" id="confirmMeta">确认</button>
+          <button class="btn ghost" id="editMeta" style="display:none">修改</button>
+          <span class="small muted" id="metaStatus"></span>
         </div>
       </div>
     </div>
 
-    <!-- 技术栈矩阵 -->
+    <!-- 矩阵（纵轴×横轴） -->
     <div class="card pad" style="margin-top:14px">
-      <div class="toolbar">
-        <div class="btn" onclick="saveToSupabase()">💾 保存到云端</div>
-        <div class="btn ghost" onclick="loadFromSupabase()">📥 从云端加载</div>
-        <div class="btn ghost" onclick="exportData()">📤 导出数据</div>
-        <div class="btn ghost" onclick="showAddOptionModal()">➕ 添加技术选项</div>
+      <div class="toolbar" style="margin-bottom:10px">
+        <button class="btn ok" id="saveBtn">保存（本地）</button>
+        <button class="btn ghost" id="exportBtn">导出 JSON</button>
+        <label class="btn ghost" for="importFile">导入 JSON</label>
+        <input id="importFile" type="file" accept="application/json" style="display:none" />
+        <button class="btn warn" id="resetBtn">重置</button>
+        <div style="margin-left:auto">
+          <button class="btn ok" id="addOptionBtn">➕ 新增技术选项</button>
+        </div>
       </div>
-      
       <div class="matrix-wrap">
-        <table class="matrix" id="techMatrix">
-          <!-- 矩阵内容将通过 JavaScript 动态生成 -->
-        </table>
+        <table class="matrix" id="matrix"></table>
       </div>
     </div>
 
-    <!-- 备注与日历 -->
+    <!-- 备注 + Calendar ToDo 对齐区块 -->
     <div class="row-notes" style="margin-top:14px">
-      <div class="card pad h-260">
-        <h4>📝 项目备注</h4>
-        <textarea id="globalNotes" placeholder="记录项目相关的备注信息..."></textarea>
+      <div class="card pad h-260" style="display:flex;flex-direction:column">
+        <div class="small muted">备注栏（总体想法、测试结果、改进方向）</div>
+        <textarea id="globalNotes" style="flex:1" placeholder="示例：ES（BM25）+ FAISS 的混合检索优于单向量；下一步按 RGB/RAGTruth 评测集做回归……"></textarea>
       </div>
-      <div class="card pad h-260">
-        <h4>📅 重要日期</h4>
-        <div id="importantDates">
-          <div style="margin-bottom:10px;">
-            <label class="small muted">开始日期</label>
-            <input type="date" id="startDate" />
-          </div>
-          <div style="margin-bottom:10px;">
-            <label class="small muted">预计完成</label>
-            <input type="date" id="endDate" />
-          </div>
-          <div style="margin-bottom:10px;">
-            <label class="small muted">里程碑</label>
-            <input type="text" id="milestone" placeholder="关键里程碑" />
-          </div>
+      <div class="card pad h-260" style="display:flex;flex-direction:column">
+        <div class="small muted">Calendar ToDo</div>
+        <div class="row" style="grid-template-columns:1fr 2fr auto;gap:10px">
+          <div><input type="date" id="todoDate" /></div>
+          <div><input type="text" id="todoText" placeholder="待办事项，如：抽样复核召回 Top-K 质量" /></div>
+          <div><button class="btn" id="addTodo">添加</button></div>
         </div>
+        <div id="todoList" style="margin-top:12px;display:flex;flex-direction:column;gap:8px;overflow:auto"></div>
       </div>
     </div>
 
-    <!-- 概览条 -->
-    <div class="summary-strip" style="margin-top:14px">
-      <div class="summary-card card pad">
-        <h4>📊 技术覆盖</h4>
-        <div id="techCoverage">计算中...</div>
-      </div>
-      <div class="summary-card card pad">
-        <h4>⏱️ 时间规划</h4>
-        <div id="timePlanning">计算中...</div>
-      </div>
-      <div class="summary-card card pad">
-        <h4>🎯 完成度</h4>
-        <div id="completionRate">计算中...</div>
-      </div>
+    <!-- 紧凑概览（单行横向滚动） -->
+    <div class="card pad" style="margin-top:14px">
+      <div class="small muted">概览</div>
+      <div id="summaryStrip" class="summary-strip"></div>
     </div>
 
-    <!-- 添加技术选项模态框 -->
-    <div id="addOptionModal" class="modal" style="display: none;">
-      <div class="modal-content">
-        <div class="modal-header">
-          <h3>添加技术选项</h3>
-          <button class="modal-close" onclick="hideAddOptionModal()">&times;</button>
+    <div class="footer">@ Jianan · 医械 RA 圈 · 最懂AI · 爱游泳的辩论选手</div>
+  </div>
+
+  <!-- 新增技术选项模态框 -->
+  <div id="addOptionModal" class="modal" style="display:none">
+    <div class="modal-content">
+      <div class="modal-header">
+        <h3>新增技术选项</h3>
+        <button class="modal-close" id="closeModal">&times;</button>
+      </div>
+      <div class="modal-body">
+        <div class="form-group">
+          <label>选择技术类别：</label>
+          <select id="categorySelect">
+            <option value="">请选择技术类别</option>
+          </select>
         </div>
-        <div class="modal-body">
-          <div class="form-group">
-            <label>技术类别</label>
-            <select id="categorySelect">
-              <option value="">请选择技术类别</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>开发阶段</label>
-            <select id="phaseSelect">
-              <option value="">请选择阶段</option>
-            </select>
-          </div>
-          <div class="form-group">
-            <label>技术选项内容</label>
-            <textarea id="optionContent" placeholder="输入技术选项的具体内容..."></textarea>
-          </div>
+        <div class="form-group">
+          <label>选择阶段：</label>
+          <select id="phaseSelect">
+            <option value="">请选择阶段</option>
+          </select>
         </div>
-        <div class="modal-footer">
-          <button class="btn ghost" onclick="hideAddOptionModal()">取消</button>
-          <button class="btn" onclick="addNewOption()">添加</button>
+        <div class="form-group">
+          <label>技术选项内容：</label>
+          <textarea id="optionContent" placeholder="请输入技术选项的详细描述..." rows="4"></textarea>
         </div>
       </div>
-    </div>
-
-    <div class="footer">
-      VB Assistant · 技术栈矩阵规划器 v3
+      <div class="modal-footer">
+        <button class="btn ghost" id="cancelAdd">取消</button>
+        <button class="btn ok" id="confirmAdd">确认添加</button>
+      </div>
     </div>
   </div>
 
   <!-- Supabase SDK -->
   <script src="https://unpkg.com/@supabase/supabase-js@2"></script>
-  
+
   <script>
-    // 全局变量
+    // Supabase 集成
     let supabaseClient;
     let currentUser = null;
     let projectId = null;
-    
-    // 默认状态
-    const defaultState = {
-      projectName: '',
-      projectDescription: '',
-      phaseStage: 'V1',
-      globalNotes: '',
-      startDate: '',
-      endDate: '',
-      milestone: '',
-      matrixData: {},
-      lastUpdated: new Date().toISOString()
-    };
-    
-    let state = JSON.parse(JSON.stringify(defaultState));
-
-    // 技术类别定义
-    const CATEGORIES = [
-      {
-        id: 'frontend',
-        name: '前端技术',
-        phases: ['V1', 'V2', 'V3', 'V4', 'V5'],
-        options_by_phase: {
-          'V1': ['HTML5', 'CSS3', 'JavaScript'],
-          'V2': ['React', 'Vue.js', 'Angular'],
-          'V3': ['TypeScript', 'Sass/Less', 'Webpack'],
-          'V4': ['PWA', 'SSR', '微前端'],
-          'V5': ['WebAssembly', 'WebGL', 'AI集成']
-        }
-      },
-      {
-        id: 'backend',
-        name: '后端技术',
-        phases: ['V1', 'V2', 'V3', 'V4', 'V5'],
-        options_by_phase: {
-          'V1': ['Node.js', 'Express', 'MongoDB'],
-          'V2': ['Python', 'Django', 'PostgreSQL'],
-          'V3': ['Java', 'Spring Boot', 'MySQL'],
-          'V4': ['微服务', 'Docker', 'Kubernetes'],
-          'V5': ['GraphQL', 'gRPC', '事件驱动']
-        }
-      },
-      {
-        id: 'devops',
-        name: 'DevOps',
-        phases: ['V1', 'V2', 'V3', 'V4', 'V5'],
-        options_by_phase: {
-          'V1': ['Git', 'GitHub', '基础CI/CD'],
-          'V2': ['Docker', 'Jenkins', '自动化测试'],
-          'V3': ['Kubernetes', '监控', '日志管理'],
-          'V4': ['IaC', '云原生', '安全扫描'],
-          'V5': ['AI运维', '混沌工程', 'SRE']
-        }
-      }
-    ];
-
-    const PHASES = ['V1', 'V2', 'V3', 'V4', 'V5'];
 
     // 初始化 Supabase
     async function initSupabase() {
@@ -315,7 +240,7 @@
           await loadFromSupabase();
         } else {
           updateAuthStatus(false);
-          loadFromLocalStorage();
+          loadState(); // 使用本地存储
         }
 
         // 监听认证状态变化
@@ -327,14 +252,14 @@
           } else if (event === 'SIGNED_OUT') {
             currentUser = null;
             updateAuthStatus(false);
-            loadFromLocalStorage();
+            loadState(); // 使用本地存储
           }
         });
 
       } catch (error) {
         console.error('Supabase 初始化失败:', error);
         updateAuthStatus(false);
-        loadFromLocalStorage();
+        loadState(); // 使用本地存储
       }
     }
 
@@ -353,21 +278,22 @@
     // 保存到 Supabase
     async function saveToSupabase() {
       if (!currentUser) {
-        alert('请先登录以保存到云端');
+        console.log('用户未登录，无法保存到云端');
         return;
       }
 
       try {
         const projectData = {
           owner: currentUser.id,
-          name: state.projectName || '未命名项目',
-          description: state.projectDescription,
-          phase_stage: state.phaseStage,
+          name: state.meta.stage + (state.meta.subVersion ? '-' + state.meta.subVersion : '') || '未命名项目',
+          description: state.globalNotes || '',
+          phase_stage: state.meta.stage,
+          sub_version: state.meta.subVersion,
+          meta_confirmed: state.meta.confirmed,
+          selections: state.selections,
+          notes: state.notes,
           global_notes: state.globalNotes,
-          start_date: state.startDate,
-          end_date: state.endDate,
-          milestone: state.milestone,
-          matrix_data: state.matrixData,
+          todos: state.todos,
           last_updated: new Date().toISOString(),
           updated_at: new Date().toISOString()
         };
@@ -396,11 +322,9 @@
 
         if (result.error) throw result.error;
         
-        alert('✅ 数据已保存到云端！');
-        console.log('保存成功:', result.data);
+        console.log('保存到云端成功:', result.data);
       } catch (error) {
-        console.error('保存失败:', error);
-        alert('❌ 保存失败: ' + error.message);
+        console.error('保存到云端失败:', error);
       }
     }
 
@@ -428,215 +352,344 @@
         if (data) {
           projectId = data.id;
           state = {
-            projectName: data.name || '',
-            projectDescription: data.description || '',
-            phaseStage: data.phase_stage || 'V1',
+            meta: {
+              stage: data.phase_stage || 'V1',
+              subVersion: data.sub_version || '',
+              confirmed: data.meta_confirmed || false
+            },
+            selections: data.selections || {},
+            notes: data.notes || {},
             globalNotes: data.global_notes || '',
-            startDate: data.start_date || '',
-            endDate: data.end_date || '',
-            milestone: data.milestone || '',
-            matrixData: data.matrix_data || {},
-            lastUpdated: data.last_updated || new Date().toISOString()
+            todos: data.todos || []
           };
           
-          updateUI();
+          renderAll();
           console.log('从云端加载成功:', data);
         } else {
           console.log('云端没有找到项目数据');
         }
       } catch (error) {
         console.error('从云端加载失败:', error);
-        alert('❌ 从云端加载失败: ' + error.message);
+        // 降级到本地存储
+        loadState();
       }
     }
 
-    // 从本地存储加载（备用）
-    function loadFromLocalStorage() {
-      try {
-        const saved = localStorage.getItem('poc-tech-matrix-v3');
-        if (saved) {
-          state = JSON.parse(saved);
-          updateUI();
-          console.log('从本地存储加载成功');
+    // —— 阶段（横轴） ——
+    const PHASES = [
+      '文档采集/解析',
+      '清洗/归一化',
+      '切块',
+      '向量化/索引',
+      '检索（混合召回）',
+      '重排',
+      '生成（Reasoning）',
+      '审核/后处理',
+      '评测/监控',
+      '部署/安全'
+    ];
+
+    // —— 技术栏目（纵轴） ——
+    const CATEGORIES = [
+      {
+        id:'dp',
+        name:'数据处理 (Data Processing)',
+        options:[],
+        options_by_phase:{
+          '文档采集/解析':[
+            '简单文档加载 (Word-txt)',
+            '多格式解析 (Word, PDF, 图表)',
+            '多源数据接入 (注册包 + 项目包)'
+          ],
+          '清洗/归一化':[
+            '复杂跨域数据清洗',
+            '高质量 Instruction–Answer 数据增强',
+            '高质量数据对 (RA+R&D)'
+          ],
+          '切块':[
+            '章节/语义切块 + 元数据抽取'
+          ]
         }
-      } catch (error) {
-        console.error('从本地存储加载失败:', error);
-      }
+      },
+      {
+        id:'kb',
+        name:'知识库搭建 (Knowledge Base Setup)',
+        options:[
+          '单一来源：Input 示例 + 官方文档',
+          'Embedding API',
+          '本地向量库- (FAISS/Chroma)/托管向量库？',
+          '多源索引 + 路径化 RAG 构建 支持跨包/跨域数据流',
+          '多源 RAG 知识库',
+          'RGB / RAGTruth 测试集（验证基准）',
+          '长期记忆型向量库',
+          '动态更新基准测试集（RGB/RAGTruth迭代）'
+        ],
+        phases:['向量化/索引']
+      },
+      {
+        id:'retr',
+        name:'检索 (Retrieval)',
+        options:[
+          '基于 Prompt 的关键词检索\\n简单多轮检索',
+          'BM25（关键词）：Elasticsearch/Lucene 内置。\\n\\n向量检索（语义）：FAISS/Pinecone。 \\n\\n 混合检索：把两类分数加权，取综合 Top-K。',
+          '动态 RAG 检索链\\n\\n数据对驱动召回',
+          '结构化检索链 (Multi-Hop)\\n+ Hybrid RAG',
+          '长上下文检索\\n\\n动态路由选择'
+        ],
+        phases:['检索（混合召回）']
+      },
+      {
+        id:'re_rank',
+        name:'重排 (Re-ranking)',
+        options:[
+          '规则匹配',
+          'Bi-Encoder / Cross-Encoder / ReRank 模型',
+          'ReRank 优化；可观测性日志',
+          '可插拔 ReRank',
+          '自适应重排'
+        ],
+        phases:['重排']
+      },
+      {
+        id:'gen2',
+        name:'生成 (Generation)（脚本/小模型/智能体-LangGraph）',
+        options:[
+          'API 调用；分模块 Prompt',
+          '精细化 Prompt 链；对话历史管理',
+          '分链路脚本 + 小模型；人工评判标准；模拟评估 API',
+          '小模型微调；分链路脚本协作',
+          '多智能体协作；LangGraph/TaskGraph'
+        ],
+        phases:['生成（Reasoning）']
+      },
+      { id:'post', name:'后处理/引用', options:['逐条引用（文档/章节/页码）','python-docx 套版','Guardrails（空答/低置信提示）','证据高亮与跳转'], phases:['审核/后处理'] },
+      { id:'eval', name:'评测指标', options:['Recall@k','MRR/nDCG','首屏可用率','引用完整率','人工抽检面板'], phases:['评测/监控'] },
+      { id:'obs', name:'监控与日志', options:['Prometheus/Grafana','OpenTelemetry 链路','失败重试/幂等哈希','周报自动化'], phases:['评测/监控'] },
+      { id:'deploy', name:'部署方式', options:['FastAPI 服务化','Celery/RQ 异步索引','HPA/读写分离','访问控制与脱敏日志','私有化/内网化'], phases:['部署/安全'] },
+    ];
+
+    // —— 状态 ——
+    const defaultState = {
+      meta:{stage:'V1', subVersion:'', confirmed:false},
+      selections:{},
+      notes:{},
+      globalNotes:'',
+      todos:[]
+    };
+    let state = loadState();
+
+    // —— 渲染 ——
+    function matrixHeadRow(){
+      const badge = `<div class="small muted" id="stageBadge">阶段：${state.meta.stage||''}  子版本：${state.meta.subVersion||''}</div>`;
+      return `<thead><tr><th style="min-width:180px">技术选择\\进程${badge}</th>${PHASES.map(p=>`<th>${p}</th>`).join('')}</tr></thead>`;
     }
 
-    // 保存到本地存储（备用）
-    function saveToLocalStorage() {
-      try {
-        localStorage.setItem('poc-tech-matrix-v3', JSON.stringify(state));
-      } catch (error) {
-        console.error('保存到本地存储失败:', error);
-      }
-    }
+    function renderMatrix(){
+      const table = document.getElementById('matrix');
+      const thead = matrixHeadRow();
 
-    // 更新 UI
-    function updateUI() {
-      document.getElementById('projectName').value = state.projectName;
-      document.getElementById('projectDescription').value = state.projectDescription;
-      document.getElementById('phaseStage').value = state.phaseStage;
-      document.getElementById('globalNotes').value = state.globalNotes;
-      document.getElementById('startDate').value = state.startDate;
-      document.getElementById('endDate').value = state.endDate;
-      document.getElementById('milestone').value = state.milestone;
-      
-      renderMatrix();
-      renderSummaryStrip();
-    }
+      const tbodyRows = CATEGORIES.map(cat=>{
+        const cells = PHASES.map(phase=>{
+          const explicitlyLimited = Array.isArray(cat.phases);
+          let allowed = true;
+          if(explicitlyLimited){
+            allowed = cat.phases.includes(phase);
+          }else if(cat.options_by_phase){
+            allowed = Array.isArray(cat.options_by_phase[phase]);
+          }else{
+            allowed = false;
+          }
+          if(!allowed){ return `<td class="disabled">—</td>`; }
 
-    // 渲染技术栈矩阵
-    function renderMatrix() {
-      const table = document.getElementById('techMatrix');
-      
-      // 创建表头
-      let headerRow = '<thead><tr><th>技术类别</th>';
-      PHASES.forEach(phase => {
-        headerRow += `<th>${phase}</th>`;
+          const optionList = (cat.options_by_phase && cat.options_by_phase[phase]) ? cat.options_by_phase[phase] : (cat.options || []);
+          const key = keyOf(cat.id, phase);
+          const chosen = state.selections[key] || [];
+          const note = state.notes[key] || '';
+          const options = optionList.map(o=>{
+            const checked = chosen.includes(o) ? 'checked' : '';
+            return `<label class="opt"><input type="checkbox" data-key="${key}" data-val="${escapeHtml(o)}" ${checked}/> ${escapeHtml(o).replace(/\\n/g,'<br/>')}</label>`
+          }).join('');
+          return `<td>
+            <div class="cell-box">
+              <div class="options">${options || '<div class="muted small">（此列暂无可选项）</div>'}</div>
+              <button class="note-toggle" data-key="${key}">📝 备注</button>
+              <textarea class="cell-note ${note? 'show':''}" data-key="${key}" placeholder="记录该环节的测试结果或改进方向……">${escapeHtml(note)}</textarea>
+            </div>
+          </td>`;
+        }).join('');
+        return `<tr><th>${cat.name}</th>${cells}</tr>`;
+      }).join('');
+
+      table.innerHTML = thead + `<tbody>${tbodyRows}</tbody>`;
+
+      // 事件绑定
+      table.querySelectorAll('input[type=checkbox]').forEach(cb=>{
+        cb.addEventListener('change', (e)=>{
+          const key = e.target.dataset.key;
+          const val = e.target.dataset.val;
+          if(!state.selections[key]) state.selections[key]=[];
+          const arr = state.selections[key];
+          const idx = arr.indexOf(val);
+          if(e.target.checked){ if(idx<0) arr.push(val); }
+          else{ if(idx>=0) arr.splice(idx,1); }
+          saveState(); renderSummaryStrip();
+        })
       });
-      headerRow += '</tr></thead>';
-      
-      // 创建表体
-      let bodyRows = '<tbody>';
-      CATEGORIES.forEach(category => {
-        bodyRows += '<tr>';
-        bodyRows += `<th>${category.name}</th>`;
-        
-        PHASES.forEach(phase => {
-          const key = keyOf(category.id, phase);
-          const cellData = state.matrixData[key] || { selected: [], notes: '' };
-          
-          bodyRows += '<td>';
-          bodyRows += '<div class="cell-box">';
-          
-          // 技术选项
-          if (category.options_by_phase && category.options_by_phase[phase]) {
-            category.options_by_phase[phase].forEach(option => {
-              const isSelected = cellData.selected.includes(option);
-              bodyRows += `
-                <div class="opt">
-                  <input type="checkbox" 
-                         ${isSelected ? 'checked' : ''} 
-                         onchange="toggleOption('${category.id}', '${phase}', '${escapeHtml(option)}', this.checked)" />
-                  <span>${escapeHtml(option)}</span>
-                </div>
-              `;
-            });
-          }
-          
-          // 备注
-          if (cellData.notes) {
-            bodyRows += `
-              <button class="note-toggle" onclick="toggleNote('${category.id}', '${phase}')">📝 查看备注</button>
-              <div class="cell-note" id="note-${category.id}-${phase}">${escapeHtml(cellData.notes)}</div>
-            `;
-          }
-          
-          bodyRows += '</div></td>';
+      table.querySelectorAll('.note-toggle').forEach(btn=>{
+        btn.addEventListener('click', (e)=>{
+          const key = e.target.dataset.key;
+          const ta = table.querySelector(`textarea[data-key="${cssEscape(key)}"]`);
+          ta.classList.toggle('show');
+        })
+      });
+      table.querySelectorAll('textarea.cell-note').forEach(ta=>{
+        ta.addEventListener('input', (e)=>{
+          const key = e.target.dataset.key;
+          state.notes[key] = e.target.value; saveState();
+        })
+      });
+
+      updateStageBadge();
+    }
+
+    function updateStageBadge(){
+      const el = document.getElementById('stageBadge');
+      if(!el) return;
+      el.textContent = `阶段：${state.meta.stage||''}  子版本：${state.meta.subVersion||''}`;
+    }
+
+    function renderMeta(){
+      const stageSel = document.getElementById('phaseStage');
+      stageSel.value = state.meta.stage || 'V1';
+      const sv = document.getElementById('subVersion');
+      sv.value = state.meta.subVersion || '';
+      const status = document.getElementById('metaStatus');
+      const confirmBtn = document.getElementById('confirmMeta');
+      const editBtn = document.getElementById('editMeta');
+
+      stageSel.disabled = sv.disabled = !!state.meta.confirmed;
+      confirmBtn.style.display = state.meta.confirmed ? 'none' : '';
+      editBtn.style.display = state.meta.confirmed ? '' : 'none';
+      status.textContent = state.meta.confirmed? '已确认并标注在表格左上角' : '未确认';
+    }
+
+    function renderSummaryStrip(){
+      const box = document.getElementById('summaryStrip');
+      const items = PHASES.map((phase, idx)=>{
+        const lines = CATEGORIES.filter(c=>{
+          if(Array.isArray(c.phases)) return c.phases.includes(phase);
+          if(c.options_by_phase) return Array.isArray(c.options_by_phase[phase]);
+          return false;
+        }).map(cat=>{
+          const key = keyOf(cat.id, phase);
+          const chosen = state.selections[key]||[];
+          const short = chosen.slice(0,3).join('，') + (chosen.length>3? ' 等…':'' );
+          return chosen.length? `<div class="small"><b>${cat.name}：</b>${short}</div>`: '';
+        }).filter(Boolean).join('');
+        return `<div class="card pad summary-card"><div class="small muted">${idx+1}. ${phase}</div>${lines || '<div class="small muted">尚未选择</div>'}</div>`;
+      }).join('');
+      box.innerHTML = items;
+    }
+
+    function renderTodos(){
+      const list = document.getElementById('todoList');
+      if(!state.todos) state.todos = [];
+      list.innerHTML = '';
+      state.todos
+        .slice().sort((a,b)=> (a.date||'').localeCompare(b.date||''))
+        .forEach((t,idx)=>{
+          const div = document.createElement('div');
+          div.className = 'todo-item' + (t.done? ' done':'' );
+          div.innerHTML = `
+            <div>
+              <div><b>${escapeHtml(t.text||'')}</b></div>
+              <div class="small muted">${t.date || '无日期'}</div>
+            </div>
+            <div style="display:flex;gap:8px">
+              <button class="btn ghost small" data-act="toggle" data-idx="${idx}">${t.done? '恢复':'完成'}</button>
+              <button class="btn warn small" data-act="del" data-idx="${idx}">删除</button>
+            </div>`;
+          list.appendChild(div);
         });
-        
-        bodyRows += '</tr>';
-      });
-      bodyRows += '</tbody>';
-      
-      table.innerHTML = headerRow + bodyRows;
+
+      list.querySelectorAll('button').forEach(b=>{
+        b.addEventListener('click', (e)=>{
+          const act = e.target.dataset.act;
+          const i = +e.target.dataset.idx;
+          if(act==='del'){ state.todos.splice(i,1); }
+          if(act==='toggle'){ state.todos[i].done = !state.todos[i].done; }
+          saveState(); renderTodos();
+        })
+      })
     }
 
-    // 渲染概览条
-    function renderSummaryStrip() {
-      // 计算技术覆盖
-      let totalOptions = 0;
-      let selectedOptions = 0;
-      
-      CATEGORIES.forEach(category => {
-        PHASES.forEach(phase => {
-          if (category.options_by_phase && category.options_by_phase[phase]) {
-            totalOptions += category.options_by_phase[phase].length;
-            const key = keyOf(category.id, phase);
-            const cellData = state.matrixData[key] || { selected: [] };
-            selectedOptions += cellData.selected.length;
-          }
-        });
-      });
-      
-      const coverageRate = totalOptions > 0 ? Math.round((selectedOptions / totalOptions) * 100) : 0;
-      
-      document.getElementById('techCoverage').innerHTML = `
-        <div>已选择: ${selectedOptions}/${totalOptions}</div>
-        <div>覆盖率: ${coverageRate}%</div>
-      `;
-      
-      // 时间规划
-      const startDate = state.startDate ? new Date(state.startDate) : null;
-      const endDate = state.endDate ? new Date(state.endDate) : null;
-      
-      let timeInfo = '未设置时间';
-      if (startDate && endDate) {
-        const days = Math.ceil((endDate - startDate) / (1000 * 60 * 60 * 24));
-        timeInfo = `${days} 天`;
-      } else if (startDate) {
-        timeInfo = '已设置开始时间';
+    // —— 事件 ——
+    document.getElementById('confirmMeta').addEventListener('click', ()=>{
+      state.meta.stage = document.getElementById('phaseStage').value;
+      state.meta.subVersion = document.getElementById('subVersion').value.trim();
+      state.meta.confirmed = true; saveState(); renderMeta(); updateStageBadge();
+    });
+    document.getElementById('editMeta').addEventListener('click', ()=>{
+      state.meta.confirmed = false; saveState(); renderMeta();
+    });
+    document.getElementById('saveBtn').addEventListener('click', ()=>{
+      saveState(); alert('已保存到本地（localStorage）。');
+    });
+    document.getElementById('exportBtn').addEventListener('click', ()=>{
+      const blob = new Blob([JSON.stringify(state,null,2)], {type:'application/json'});
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url; a.download = `tech-matrix-${(state.meta.stage||'V')}-${(state.meta.subVersion||'').replace(/\\s+/g,'')}.json`;
+      document.body.appendChild(a); a.click(); a.remove(); URL.revokeObjectURL(url);
+    });
+    document.getElementById('importFile').addEventListener('change', (e)=>{
+      const file = e.target.files[0]; if(!file) return;
+      const reader = new FileReader();
+      reader.onload = ()=>{
+        try{
+          const obj = JSON.parse(reader.result);
+          state = Object.assign({}, defaultState, obj);
+          saveState(); renderAll();
+        }catch(err){ alert('导入失败：JSON 无法解析'); }
+      };
+      reader.readAsText(file);
+    });
+    document.getElementById('resetBtn').addEventListener('click', ()=>{
+      if(confirm('确定要重置吗？这会清空当前页面的选择与记录。')){
+        state = JSON.parse(JSON.stringify(defaultState));
+        saveState(); renderAll();
       }
-      
-      document.getElementById('timePlanning').innerHTML = `
-        <div>${timeInfo}</div>
-        <div>阶段: ${state.phaseStage}</div>
-      `;
-      
-      // 完成度（基于当前阶段）
-      const currentPhaseIndex = PHASES.indexOf(state.phaseStage);
-      const completionRate = currentPhaseIndex >= 0 ? Math.round(((currentPhaseIndex + 1) / PHASES.length) * 100) : 0;
-      
-      document.getElementById('completionRate').innerHTML = `
-        <div>当前阶段: ${state.phaseStage}</div>
-        <div>完成度: ${completionRate}%</div>
-      `;
-    }
+    });
+    document.getElementById('globalNotes').addEventListener('input', (e)=>{
+      state.globalNotes = e.target.value; saveState();
+    });
+    document.getElementById('addTodo').addEventListener('click', ()=>{
+      const text = document.getElementById('todoText').value.trim();
+      const date = document.getElementById('todoDate').value;
+      if(!text) return alert('请输入待办内容');
+      state.todos.push({text,date,done:false});
+      document.getElementById('todoText').value='';
+      saveState(); renderTodos();
+    });
 
-    // 切换技术选项
-    function toggleOption(categoryId, phase, option, isSelected) {
-      const key = keyOf(categoryId, phase);
-      if (!state.matrixData[key]) {
-        state.matrixData[key] = { selected: [], notes: '' };
-      }
-      
-      if (isSelected) {
-        if (!state.matrixData[key].selected.includes(option)) {
-          state.matrixData[key].selected.push(option);
-        }
-      } else {
-        state.matrixData[key].selected = state.matrixData[key].selected.filter(item => item !== option);
-      }
-      
-      state.lastUpdated = new Date().toISOString();
-      saveToLocalStorage(); // 本地备份
-      
-      if (currentUser) {
-        saveToSupabase(); // 自动保存到云端
-      }
-    }
+    // 新增技术选项功能
+    document.getElementById('addOptionBtn').addEventListener('click', ()=>{
+      showAddOptionModal();
+    });
 
-    // 切换备注显示
-    function toggleNote(categoryId, phase) {
-      const noteElement = document.getElementById(`note-${categoryId}-${phase}`);
-      noteElement.classList.toggle('show');
-    }
+    document.getElementById('closeModal').addEventListener('click', ()=>{
+      hideAddOptionModal();
+    });
 
-    // 导出数据
-    function exportData() {
-      const dataStr = JSON.stringify(state, null, 2);
-      const dataBlob = new Blob([dataStr], { type: 'application/json' });
-      const url = URL.createObjectURL(dataBlob);
-      const link = document.createElement('a');
-      link.href = url;
-      link.download = `poc-tech-matrix-${new Date().toISOString().split('T')[0]}.json`;
-      link.click();
-      URL.revokeObjectURL(url);
-    }
+    document.getElementById('cancelAdd').addEventListener('click', ()=>{
+      hideAddOptionModal();
+    });
 
-    // 添加技术选项相关函数
+    document.getElementById('confirmAdd').addEventListener('click', ()=>{
+      addNewOption();
+    });
+
+    // 模态框显示/隐藏
     function showAddOptionModal() {
       const modal = document.getElementById('addOptionModal');
       const categorySelect = document.getElementById('categorySelect');
@@ -691,9 +744,15 @@
       
       // 添加新的技术选项
       if (category.options_by_phase && category.options_by_phase[phase]) {
+        // 如果该阶段已有选项数组，直接添加
         category.options_by_phase[phase].push(content);
       } else if (category.options_by_phase) {
+        // 如果该阶段还没有选项数组，创建新的
         category.options_by_phase[phase] = [content];
+      } else if (category.phases && category.phases.includes(phase)) {
+        // 如果使用phases数组且包含该阶段，添加到options
+        if (!category.options) category.options = [];
+        category.options.push(content);
       } else {
         alert('该技术类别不支持此阶段');
         return;
@@ -704,65 +763,37 @@
       hideAddOptionModal();
       alert('技术选项添加成功！');
     }
+    // —— 存取 ——
+    const KEY = 'ra-tech-matrix-v3-compact';
+    function saveState(){ 
+      localStorage.setItem(KEY, JSON.stringify(state)); 
+      // 如果用户已登录，同时保存到云端
+      if (currentUser) {
+        saveToSupabase();
+      }
+    }
+    function loadState(){
+      try{ const raw = localStorage.getItem(KEY); return raw? JSON.parse(raw): JSON.parse(JSON.stringify(defaultState)); }
+      catch(e){ return JSON.parse(JSON.stringify(defaultState)); }
+    }
 
-    // 工具函数
-    function keyOf(catId, phase) { return `${catId}|${phase}`; }
-    function escapeHtml(s) { return (s||'').replace(/[&<>\"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;','\'':'&#39;' }[m])); }
+    // —— utils ——
+    function keyOf(catId, phase){ return `${catId}|${phase}`; }
+    function escapeHtml(s){ return (s||'').replace(/[&<>\"']/g, m=>({ '&':'&amp;','<':'&lt;','>':'&gt;','\"':'&quot;','\'':'&#39;' }[m])); }
+    function cssEscape(s){ return (s||'').replace(/[^a-zA-Z0-9_-]/g, m=>`\\${m}`); }
 
-    // 监听输入变化
-    document.getElementById('projectName').addEventListener('input', function() {
-      state.projectName = this.value;
-      state.lastUpdated = new Date().toISOString();
-      saveToLocalStorage();
-      if (currentUser) saveToSupabase();
-    });
-
-    document.getElementById('projectDescription').addEventListener('input', function() {
-      state.projectDescription = this.value;
-      state.lastUpdated = new Date().toISOString();
-      saveToLocalStorage();
-      if (currentUser) saveToSupabase();
-    });
-
-    document.getElementById('phaseStage').addEventListener('change', function() {
-      state.phaseStage = this.value;
-      state.lastUpdated = new Date().toISOString();
-      saveToLocalStorage();
-      if (currentUser) saveToSupabase();
+    function renderAll(){
+      renderMatrix();
+      renderMeta();
       renderSummaryStrip();
-    });
+      renderTodos();
+      document.getElementById('globalNotes').value = state.globalNotes || '';
+    }
 
-    document.getElementById('globalNotes').addEventListener('input', function() {
-      state.globalNotes = this.value;
-      state.lastUpdated = new Date().toISOString();
-      saveToLocalStorage();
-      if (currentUser) saveToSupabase();
-    });
-
-    document.getElementById('startDate').addEventListener('change', function() {
-      state.startDate = this.value;
-      state.lastUpdated = new Date().toISOString();
-      saveToLocalStorage();
-      if (currentUser) saveToSupabase();
-      renderSummaryStrip();
-    });
-
-    document.getElementById('endDate').addEventListener('change', function() {
-      state.endDate = this.value;
-      state.lastUpdated = new Date().toISOString();
-      saveToLocalStorage();
-      if (currentUser) saveToSupabase();
-      renderSummaryStrip();
-    });
-
-    document.getElementById('milestone').addEventListener('input', function() {
-      state.milestone = this.value;
-      state.lastUpdated = new Date().toISOString();
-      saveToLocalStorage();
-      if (currentUser) saveToSupabase();
-    });
-
-    // 初始化
+    // 初始渲染
+    renderAll();
+    
+    // 初始化 Supabase
     initSupabase();
   </script>
 </body>
