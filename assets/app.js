@@ -69,3 +69,74 @@ function boot(){
   if (APPS[key]) loadApp(key, false); else loadApp('poc-tech', false);
 }
 window.addEventListener('hashchange', boot); boot();
+
+/* ===== 认证功能 ===== */
+let currentUser = null;
+
+// 初始化 Supabase
+const supabase = window.supabaseClient;
+
+// 登录按钮和用户信息元素
+const loginBtn = document.getElementById('login-btn');
+const userInfo = document.getElementById('user-info');
+const userName = document.getElementById('user-name');
+const logoutBtn = document.getElementById('logout-btn');
+
+// 检查认证状态
+async function checkAuth() {
+  try {
+    const { data: { session } } = await supabase.auth.getSession();
+    if (session) {
+      currentUser = session.user;
+      showUserInfo();
+    } else {
+      showLoginButton();
+    }
+  } catch (error) {
+    console.error('检查认证状态失败:', error);
+    showLoginButton();
+  }
+}
+
+// 显示登录按钮
+function showLoginButton() {
+  loginBtn.style.display = 'flex';
+  userInfo.style.display = 'none';
+}
+
+// 显示用户信息
+function showUserInfo() {
+  loginBtn.style.display = 'none';
+  userInfo.style.display = 'flex';
+  userName.textContent = currentUser?.email || currentUser?.user_metadata?.name || '用户';
+}
+
+// 登录按钮点击事件
+loginBtn?.addEventListener('click', () => {
+  window.location.href = './login.html';
+});
+
+// 退出登录
+logoutBtn?.addEventListener('click', async () => {
+  try {
+    await supabase.auth.signOut();
+    currentUser = null;
+    showLoginButton();
+  } catch (error) {
+    console.error('退出登录失败:', error);
+  }
+});
+
+// 监听认证状态变化
+supabase.auth.onAuthStateChange(async (event, session) => {
+  if (event === 'SIGNED_IN') {
+    currentUser = session.user;
+    showUserInfo();
+  } else if (event === 'SIGNED_OUT') {
+    currentUser = null;
+    showLoginButton();
+  }
+});
+
+// 初始化认证状态
+checkAuth();

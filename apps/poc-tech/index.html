@@ -323,8 +323,29 @@
         if (result.error) throw result.error;
         
         console.log('保存到云端成功:', result.data);
+        
+        // 显示成功消息
+        const authStatus = document.getElementById('authStatus');
+        if (authStatus) {
+          authStatus.textContent = `✅ 已连接 (${currentUser?.email || '用户'}) - 数据已保存到云端`;
+          authStatus.className = 'auth-status connected';
+          setTimeout(() => {
+            authStatus.textContent = `✅ 已连接 (${currentUser?.email || '用户'})`;
+          }, 3000);
+        }
       } catch (error) {
         console.error('保存到云端失败:', error);
+        
+        // 显示错误消息
+        const authStatus = document.getElementById('authStatus');
+        if (authStatus) {
+          authStatus.textContent = `❌ 云端保存失败: ${error.message}`;
+          authStatus.className = 'auth-status disconnected';
+          setTimeout(() => {
+            authStatus.textContent = `✅ 已连接 (${currentUser?.email || '用户'})`;
+            authStatus.className = 'auth-status connected';
+          }, 5000);
+        }
       }
     }
 
